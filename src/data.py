@@ -21,6 +21,22 @@ class StringsProvider(pyquoks.data.StringsProvider):
 
     class ButtonStrings(pyquoks.data.StringsProvider.Strings):
 
+        # region /start
+
+        @property
+        def schedule(self) -> str:
+            return "Расписание"
+
+        @property
+        def select_group(self) -> str:
+            return "Выбрать группу"
+
+        @property
+        def settings(self) -> str:
+            return "Настройки"
+
+        # endregion
+
         # region /admin
 
         @property
@@ -38,6 +54,21 @@ class StringsProvider(pyquoks.data.StringsProvider):
         # endregion
 
     class MenuStrings(pyquoks.data.StringsProvider.Strings):
+
+        # region /start
+
+        @staticmethod
+        def start(user: aiogram.types.User) -> str:
+            return (
+                f"<b>Привет, {user.full_name}!</b>\n"
+                f"\n"
+                f"Здесь вы можете посмотреть\n"
+                f"актуальное расписание\n"
+                f"Электростальского колледжа\n"
+                f"для вашей учебной группы."
+            )
+
+        # endregion
 
         # region /admin
 
@@ -65,9 +96,33 @@ class StringsProvider(pyquoks.data.StringsProvider):
 
 
 class ButtonsProvider:
-    def __init__(self, strings: StringsProvider, config: ConfigManager) -> None:
+    def __init__(self, strings: StringsProvider) -> None:
         self._strings = strings
-        self._config = config
+
+    # region /start
+
+    @property
+    def schedule(self) -> aiogram.types.InlineKeyboardButton:
+        return aiogram.types.InlineKeyboardButton(
+            text=self._strings.button.schedule,
+            callback_data="schedule",
+        )
+
+    @property
+    def select_group(self) -> aiogram.types.InlineKeyboardButton:
+        return aiogram.types.InlineKeyboardButton(
+            text=self._strings.button.select_group,
+            callback_data="select_group",
+        )
+
+    @property
+    def settings(self) -> aiogram.types.InlineKeyboardButton:
+        return aiogram.types.InlineKeyboardButton(
+            text=self._strings.button.settings,
+            callback_data="settings",
+        )
+
+    # endregion
 
     # region /admin
 
@@ -98,6 +153,18 @@ class ButtonsProvider:
 class KeyboardProvider:
     def __init__(self, buttons: ButtonsProvider) -> None:
         self._buttons = buttons
+
+    # region /start
+
+    @property
+    def start(self) -> aiogram.types.InlineKeyboardMarkup:
+        markup_builder = aiogram.utils.keyboard.InlineKeyboardBuilder()
+        markup_builder.row(self._buttons.schedule)
+        markup_builder.row(self._buttons.select_group, self._buttons.settings)
+
+        return markup_builder.as_markup()
+
+    # endregion
 
     # region /admin
 

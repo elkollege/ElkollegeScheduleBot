@@ -10,7 +10,6 @@ async def main() -> None:
     config = data.ConfigManager()
     buttons = data.ButtonsProvider(
         strings=strings,
-        config=config,
     )
     keyboards = data.KeyboardProvider(
         buttons=buttons,

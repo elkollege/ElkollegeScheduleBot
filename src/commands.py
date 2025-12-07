@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-import datetime
-
 import aiogram
 import aiogram.filters
 import pyquoks
@@ -30,6 +28,10 @@ class CommandsRouter(aiogram.Router):
         )
 
         self.message.register(
+            self.start_handler,
+            aiogram.filters.CommandStart(),
+        )
+        self.message.register(
             self.admin_handler,
             aiogram.filters.Command(
                 "admin",
@@ -39,6 +41,25 @@ class CommandsRouter(aiogram.Router):
         self._logger.info(f"{self.name} initialized!")
 
     # region Handlers
+
+    async def start_handler(
+            self,
+            message: aiogram.types.Message,
+            command: aiogram.filters.CommandObject,
+    ) -> None:
+        self._logger.log_user_interaction(
+            user=message.from_user,
+            interaction=f"{command.text}",
+        )
+
+        await self._bot.send_message(
+            chat_id=message.chat.id,
+            message_thread_id=utils.get_message_thread_id(message),
+            text=self._strings.menu.start(
+                user=message.from_user,
+            ),
+            reply_markup=self._keyboards.start,
+        )
 
     async def admin_handler(
             self,
