@@ -40,7 +40,10 @@ class CallbacksRouter(aiogram.Router):
     ) -> None:
         is_admin = call.from_user.id in self._config.settings.admins_list
 
-        self._logger.log_user_interaction(call.from_user, call.data)
+        self._logger.log_user_interaction(
+            user=call.from_user,
+            interaction=f"{call.data} ({is_admin=})",
+        )
 
         try:
             match call.data:

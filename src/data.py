@@ -20,21 +20,38 @@ class StringsProvider(pyquoks.data.StringsProvider):
             return "Эта кнопка недоступна!"
 
     class ButtonStrings(pyquoks.data.StringsProvider.Strings):
+
+        # region /admin
+
+        @property
+        def add_schedule(self) -> str:
+            return "Добавить расписание"
+
+        @property
+        def add_substitutions(self) -> str:
+            return "Добавить замены"
+
         @property
         def export_logs(self) -> str:
             return "Экспортировать логи"
 
+        # endregion
+
     class MenuStrings(pyquoks.data.StringsProvider.Strings):
+
+        # region /admin
+
         @staticmethod
-        def admin(bot_full_name: str, time_started: datetime.datetime) -> str:
+        def admin(user: aiogram.types.User, time_started: datetime.datetime) -> str:
             return (
-                f"Информация о {bot_full_name}:\n"
+                f"<b>Меню администратора</b>\n"
                 f"\n"
-                f"Запущен: {time_started.strftime("%d.%m.%y %H:%M:%S")} UTC\n"
+                f"Добро пожаловать, {user.full_name}!\n"
                 f"\n"
-                f"Исходный код на GitHub:\n"
-                f"https://github.com/diquoks/ElkollegeScheduleBot\n"
+                f"Дата запуска: <b>{time_started.astimezone(datetime.UTC).strftime("%d.%m.%y %H:%M:%S")} UTC</b>"
             )
+
+        # endregion
 
     _OBJECTS = {
         "alert": AlertStrings,
@@ -48,13 +65,25 @@ class StringsProvider(pyquoks.data.StringsProvider):
 
 
 class ButtonsProvider:
-    def __init__(
-            self,
-            strings: StringsProvider,
-            config: ConfigManager,
-    ) -> None:
+    def __init__(self, strings: StringsProvider, config: ConfigManager) -> None:
         self._strings = strings
         self._config = config
+
+    # region /admin
+
+    @property
+    def add_schedule(self) -> aiogram.types.InlineKeyboardButton:
+        return aiogram.types.InlineKeyboardButton(
+            text=self._strings.button.add_schedule,
+            callback_data="add_schedule",
+        )
+
+    @property
+    def add_substitutions(self) -> aiogram.types.InlineKeyboardButton:
+        return aiogram.types.InlineKeyboardButton(
+            text=self._strings.button.add_substitutions,
+            callback_data="add_substitutions",
+        )
 
     @property
     def export_logs(self) -> aiogram.types.InlineKeyboardButton:
@@ -63,20 +92,24 @@ class ButtonsProvider:
             callback_data="export_logs",
         )
 
+    # endregion
+
 
 class KeyboardProvider:
-    def __init__(
-            self,
-            buttons: ButtonsProvider,
-    ) -> None:
+    def __init__(self, buttons: ButtonsProvider) -> None:
         self._buttons = buttons
+
+    # region /admin
 
     @property
     def admin(self) -> aiogram.types.InlineKeyboardMarkup:
         markup_builder = aiogram.utils.keyboard.InlineKeyboardBuilder()
+        markup_builder.row(self._buttons.add_schedule, self._buttons.add_substitutions)
         markup_builder.row(self._buttons.export_logs)
 
         return markup_builder.as_markup()
+
+    # endregion
 
 
 # endregion

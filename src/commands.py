@@ -47,17 +47,18 @@ class CommandsRouter(aiogram.Router):
     ) -> None:
         is_admin = message.from_user.id in self._config.settings.admins_list
 
-        self._logger.log_user_interaction(message.from_user, f"{command.text} ({is_admin=})")
+        self._logger.log_user_interaction(
+            user=message.from_user,
+            interaction=f"{command.text} ({is_admin=})",
+        )
 
         if is_admin:
             await self._bot.send_message(
                 chat_id=message.chat.id,
                 message_thread_id=utils.get_message_thread_id(message),
                 text=self._strings.menu.admin(
-                    bot_full_name=(await self._bot.me()).full_name,
-                    time_started=pyquoks.utils.get_process_created_datetime().astimezone(
-                        tz=datetime.UTC,
-                    ),
+                    user=message.from_user,
+                    time_started=pyquoks.utils.get_process_created_datetime(),
                 ),
                 reply_markup=self._keyboards.admin,
             )
