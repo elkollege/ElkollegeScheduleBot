@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import aiogram
 import aiogram.client.default
 import aiogram.exceptions

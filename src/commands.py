@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import aiogram
 import aiogram.filters
 import pyquoks

@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import aiogram
 import aiogram.exceptions
 import aiogram.filters
