@@ -1,10 +1,11 @@
 import aiogram
 import aiogram.client.default
-import aiogram.exceptions
 
-import callbacks
-import commands
-import data
+import src.callbacks
+import src.commands
+import src.constants
+import src.data
+import src.messages
 
 
 class AiogramDispatcher(aiogram.Dispatcher):
@@ -15,22 +16,19 @@ class AiogramDispatcher(aiogram.Dispatcher):
         ),
     ]
 
-    _IGNORED_EXCEPTIONS = [
-        aiogram.exceptions.TelegramForbiddenError,
-        aiogram.exceptions.TelegramRetryAfter,
-    ]
-
     def __init__(
             self,
-            strings: data.StringsProvider,
-            keyboards: data.KeyboardProvider,
-            config: data.ConfigManager,
-            logger: data.LoggerService,
+            strings_provider: src.data.StringsProvider,
+            keyboards_provider: src.data.KeyboardsProvider,
+            config_manager: src.data.ConfigManager,
+            data_manager: src.data.DataManager,
+            logger_service: src.data.LoggerService,
     ) -> None:
-        self._strings = strings
-        self._keyboards = keyboards
-        self._config = config
-        self._logger = logger
+        self._strings = strings_provider
+        self._keyboards = keyboards_provider
+        self._config = config_manager
+        self._data = data_manager
+        self._logger = logger_service
         self._bot = aiogram.Bot(
             token=self._config.settings.bot_token,
             default=aiogram.client.default.DefaultBotProperties(
@@ -53,19 +51,29 @@ class AiogramDispatcher(aiogram.Dispatcher):
         )
 
         self.include_routers(
-            commands.CommandsRouter(
-                strings=self._strings,
-                keyboards=self._keyboards,
-                config=self._config,
-                logger=self._logger,
+            src.commands.CommandsRouter(
+                strings_provider=self._strings,
+                keyboards_provider=self._keyboards,
+                config_manager=self._config,
+                logger_service=self._logger,
                 bot=self._bot,
             ),
-            callbacks.CallbacksRouter(
-                strings=self._strings,
-                config=self._config,
-                logger=self._logger,
+            src.callbacks.CallbacksRouter(
+                strings_provider=self._strings,
+                keyboards_provider=self._keyboards,
+                config_manager=self._config,
+                data_manager=self._data,
+                logger_service=self._logger,
                 bot=self._bot,
             ),
+            src.messages.MessagesRouter(
+                strings_provider=self._strings,
+                keyboards_provider=self._keyboards,
+                config_manager=self._config,
+                data_manager=self._data,
+                logger_service=self._logger,
+                bot=self._bot,
+            )
         )
 
         self._logger.info(f"{self.name} initialized!")
@@ -79,17 +87,15 @@ class AiogramDispatcher(aiogram.Dispatcher):
             )
 
             await self.start_polling(self._bot)
-        except Exception as exception:
-            self._logger.log_error(
-                exception=exception,
-            )
+        except Exception as e:
+            self._logger.log_error(e)
 
     # endregion
 
     # region Handlers
 
     async def error_handler(self, event: aiogram.types.ErrorEvent) -> None:
-        if type(event.exception) not in self._IGNORED_EXCEPTIONS:
+        if type(event.exception) not in src.constants.IGNORED_EXCEPTIONS:
             self._logger.log_error(
                 exception=event.exception,
             )

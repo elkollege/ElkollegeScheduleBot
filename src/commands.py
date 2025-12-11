@@ -2,23 +2,23 @@ import aiogram
 import aiogram.filters
 import pyquoks
 
-import data
-import utils
+import src.data
+import src.utils
 
 
 class CommandsRouter(aiogram.Router):
     def __init__(
             self,
-            strings: data.StringsProvider,
-            keyboards: data.KeyboardProvider,
-            config: data.ConfigManager,
-            logger: data.LoggerService,
+            strings_provider: src.data.StringsProvider,
+            keyboards_provider: src.data.KeyboardsProvider,
+            config_manager: src.data.ConfigManager,
+            logger_service: src.data.LoggerService,
             bot: aiogram.Bot,
     ) -> None:
-        self._strings = strings
-        self._keyboards = keyboards
-        self._config = config
-        self._logger = logger
+        self._strings = strings_provider
+        self._keyboards = keyboards_provider
+        self._config = config_manager
+        self._logger = logger_service
         self._bot = bot
 
         super().__init__(
@@ -52,11 +52,11 @@ class CommandsRouter(aiogram.Router):
 
         await self._bot.send_message(
             chat_id=message.chat.id,
-            message_thread_id=utils.get_message_thread_id(message),
+            message_thread_id=src.utils.get_message_thread_id(message),
             text=self._strings.menu.start(
                 user=message.from_user,
             ),
-            reply_markup=self._keyboards.start,
+            reply_markup=self._keyboards.start(),
         )
 
     async def admin_handler(
@@ -74,12 +74,12 @@ class CommandsRouter(aiogram.Router):
         if is_admin:
             await self._bot.send_message(
                 chat_id=message.chat.id,
-                message_thread_id=utils.get_message_thread_id(message),
+                message_thread_id=src.utils.get_message_thread_id(message),
                 text=self._strings.menu.admin(
                     user=message.from_user,
                     time_started=pyquoks.utils.get_process_created_datetime(),
                 ),
-                reply_markup=self._keyboards.admin,
+                reply_markup=self._keyboards.admin(),
             )
 
     # endregion
