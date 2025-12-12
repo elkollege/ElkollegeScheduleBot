@@ -25,7 +25,7 @@ async def main() -> None:
             filename=src.dispatcher.__name__,
             file_handling=config_manager.settings.file_logging,
             level=logging.INFO,
-        )
+        ),
     )
     await bot.polling_coroutine()
 

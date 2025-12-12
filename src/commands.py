@@ -47,7 +47,7 @@ class CommandsRouter(aiogram.Router):
     ) -> None:
         self._logger.log_user_interaction(
             user=message.from_user,
-            interaction=f"{command.text}",
+            interaction=command.text,
         )
 
         await self._bot.send_message(

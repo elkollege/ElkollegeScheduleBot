@@ -72,7 +72,7 @@ class MessagesRouter(aiogram.Router):
                     await self._bot.send_message(
                         chat_id=message.chat.id,
                         text=self._strings.menu.upload_schedule_success(
-                            groups_count=len(self._data.schedule),
+                            schedule=self._data.schedule,
                         ),
                         reply_markup=self._keyboards.upload_schedule_ended(),
                     )

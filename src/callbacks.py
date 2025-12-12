@@ -54,6 +54,15 @@ class CallbacksRouter(aiogram.Router):
 
         try:
             match call.data:
+                case "schedule":
+                    if self._data.schedule:
+                        ...  # TODO
+                    else:
+                        await self._bot.answer_callback_query(
+                            callback_query_id=call.id,
+                            text=self._strings.alert.schedule_unavailable(),
+                            show_alert=True,
+                        )
                 case _:
                     if is_admin:
                         match call.data:
@@ -72,7 +81,8 @@ class CallbacksRouter(aiogram.Router):
                                     chat_id=call.message.chat.id,
                                     message_id=call.message.message_id,
                                     text=self._strings.menu.manage_schedule(
-                                        schedule_availability=bool(self._data.schedule)),
+                                        schedule=self._data.schedule,
+                                    ),
                                     reply_markup=self._keyboards.manage_schedule(),
                                 )
                             case "upload_schedule":
@@ -96,7 +106,8 @@ class CallbacksRouter(aiogram.Router):
                                         chat_id=call.message.chat.id,
                                         message_id=call.message.message_id,
                                         text=self._strings.menu.manage_schedule(
-                                            schedule_availability=bool(self._data.schedule)),
+                                            schedule=self._data.schedule,
+                                        ),
                                         reply_markup=self._keyboards.manage_schedule(),
                                     )
 

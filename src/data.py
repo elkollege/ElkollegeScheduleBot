@@ -1,4 +1,5 @@
 import datetime
+import textwrap
 
 import aiogram
 import aiogram.fsm.state
@@ -91,13 +92,15 @@ class StringsProvider(pyquoks.data.StringsProvider):
 
         @classmethod
         def start(cls, user: aiogram.types.User) -> str:
-            return (
-                f"<b>Привет, {user.full_name}!</b>\n"
-                f"\n"
-                f"Здесь вы можете посмотреть\n"
-                f"актуальное расписание\n"
-                f"Электростальский колледжа\n"
-                f"для вашей учебной группы."
+            return textwrap.dedent(
+                f"""\
+                <b>Привет, {user.full_name}!</b>
+                
+                Здесь вы можете посмотреть
+                актуальное расписание
+                Электростальский колледжа
+                для вашей учебной группы.
+                """,
             )
 
         # endregion
@@ -106,44 +109,55 @@ class StringsProvider(pyquoks.data.StringsProvider):
 
         @classmethod
         def admin(cls, user: aiogram.types.User, time_started: datetime.datetime) -> str:
-            return (
-                f"<b>Меню администратора</b>\n"
-                f"\n"
-                f"Добро пожаловать, {user.full_name}!\n"
-                f"\n"
-                f"Дата запуска: <b>{time_started.astimezone(datetime.UTC).strftime("%d.%m.%y %H:%M:%S")} UTC</b>"
+            return textwrap.dedent(
+                f"""\
+                <b>Меню администратора</b>
+                
+                Добро пожаловать, {user.full_name}!
+                
+                Дата запуска: <b>{time_started.astimezone(datetime.UTC).strftime("%d.%m.%y %H:%M:%S")} UTC</b>
+                """,
             )
 
         @classmethod
-        def manage_schedule(cls, schedule_availability: bool) -> str:
-            return (
-                f"<b>Управление расписанием</b>\n"
-                f"\n"
-                f"Статус расписания: <b>{"Загружено" if schedule_availability else "Отсутствует"}</b>"
+        def manage_schedule(cls, schedule: list) -> str:
+            return textwrap.dedent(
+                f"""\
+                <b>Управление расписанием</b>
+                
+                Статус расписания: <b>{"Загружено" if schedule else "Отсутствует"}</b>
+                {f"Учебных групп: <b>{len(schedule)}</b>" if schedule else ""}
+                """,
             )
 
         @classmethod
         def upload_schedule(cls, schedule_extension: str) -> str:
-            return (
-                f"<b>Загрузка расписания</b>\n"
-                f"\n"
-                f"Отправьте файл с расширением <b>\".{schedule_extension}\"</b>"
+            return textwrap.dedent(
+                f"""\
+                <b>Загрузка расписания</b>
+                
+                Отправьте файл с расширением <b>\".{schedule_extension}\"</b>
+                """,
             )
 
         @classmethod
         def upload_schedule_error(cls) -> str:
-            return (
-                f"<b>Возникла ошибка!</b>\n"
-                f"\n"
-                f"Не удалось обработать расписание."
+            return textwrap.dedent(
+                f"""\
+                <b>Возникла ошибка!</b>
+                
+                Не удалось обработать расписание.
+                """,
             )
 
         @classmethod
-        def upload_schedule_success(cls, groups_count: int) -> str:
-            return (
-                f"<b>Расписание загружено!</b>\n"
-                f"\n"
-                f"Кол-во учебных групп: <b>{groups_count}</b>"
+        def upload_schedule_success(cls, schedule: list) -> str:
+            return textwrap.dedent(
+                f"""\
+                <b>Расписание загружено!</b>
+                
+                Учебных групп: <b>{len(schedule)}</b>
+                """,
             )
 
         # endregion
