@@ -1,22 +1,24 @@
+import datetime
+
 import aiogram
 import aiogram.exceptions
 import aiogram.filters
 import aiogram.fsm.context
 import pyquoks
 
-import src.constants
-import src.data
-import src.utils
+import constants
+import data
+import utils
 
 
 class CallbacksRouter(aiogram.Router):
     def __init__(
             self,
-            strings_provider: src.data.StringsProvider,
-            keyboards_provider: src.data.KeyboardsProvider,
-            config_manager: src.data.ConfigManager,
-            data_manager: src.data.DataManager,
-            logger_service: src.data.LoggerService,
+            strings_provider: data.StringsProvider,
+            keyboards_provider: data.KeyboardsProvider,
+            config_manager: data.ConfigManager,
+            data_manager: data.DataManager,
+            logger_service: data.LoggerService,
             bot: aiogram.Bot,
     ) -> None:
         self._strings = strings_provider
@@ -53,8 +55,17 @@ class CallbacksRouter(aiogram.Router):
         await state.clear()
 
         try:
-            match call.data:
-                case "schedule":
+            match call.data.split():
+                case ["schedule"]:
+                    if self._data.schedule:
+                        ...  # TODO
+                    else:
+                        await self._bot.answer_callback_query(
+                            callback_query_id=call.id,
+                            text=self._strings.alert.schedule_unavailable(),
+                            show_alert=True,
+                        )
+                case ["select_group"]:
                     if self._data.schedule:
                         ...  # TODO
                     else:
@@ -65,8 +76,8 @@ class CallbacksRouter(aiogram.Router):
                         )
                 case _:
                     if is_admin:
-                        match call.data:
-                            case "admin":
+                        match call.data.split():
+                            case ["admin"]:
                                 await self._bot.edit_message_text(
                                     chat_id=call.message.chat.id,
                                     message_id=call.message.message_id,
@@ -76,7 +87,7 @@ class CallbacksRouter(aiogram.Router):
                                     ),
                                     reply_markup=self._keyboards.admin(),
                                 )
-                            case "manage_schedule":
+                            case ["manage_schedule"]:
                                 await self._bot.edit_message_text(
                                     chat_id=call.message.chat.id,
                                     message_id=call.message.message_id,
@@ -85,18 +96,18 @@ class CallbacksRouter(aiogram.Router):
                                     ),
                                     reply_markup=self._keyboards.manage_schedule(),
                                 )
-                            case "upload_schedule":
+                            case ["upload_schedule"]:
                                 await self._bot.edit_message_text(
                                     chat_id=call.message.chat.id,
                                     message_id=call.message.message_id,
                                     text=self._strings.menu.upload_schedule(
-                                        schedule_extension=self._config.settings.workbook_extension,
+                                        workbook_extension=self._config.settings.workbook_extension,
                                     ),
                                     reply_markup=self._keyboards.upload_schedule(),
                                 )
 
-                                await state.set_state(src.data.States.upload_schedule)
-                            case "delete_schedule":
+                                await state.set_state(data.States.upload_schedule)
+                            case ["delete_schedule"]:
                                 if self._data.schedule:
                                     self._data.update(
                                         schedule=[],
@@ -122,13 +133,93 @@ class CallbacksRouter(aiogram.Router):
                                         text=self._strings.alert.schedule_unavailable(),
                                         show_alert=True,
                                     )
-                            case "export_logs":
+                            case ["select_substitutions"]:
+                                await self._bot.edit_message_text(
+                                    chat_id=call.message.chat.id,
+                                    message_id=call.message.message_id,
+                                    text=self._strings.menu.select_substitutions(),
+                                    reply_markup=self._keyboards.select_substitutions(),
+                                )
+                            case ["manage_substitutions", current_date]:
+                                current_date = datetime.datetime.strptime(current_date, "%d_%m_%y")
+
+                                current_substitutions = self._data.get_substitutions(current_date)
+
+                                await self._bot.edit_message_text(
+                                    chat_id=call.message.chat.id,
+                                    message_id=call.message.message_id,
+                                    text=self._strings.menu.manage_substitutions(
+                                        date=current_date,
+                                        substitutions=current_substitutions,
+                                    ),
+                                    reply_markup=self._keyboards.manage_substitutions(
+                                        date=current_date,
+                                    ),
+                                )
+                            case ["upload_substitutions", current_date]:
+                                current_date = datetime.datetime.strptime(current_date, "%d_%m_%y")
+
+                                await self._bot.edit_message_text(
+                                    chat_id=call.message.chat.id,
+                                    message_id=call.message.message_id,
+                                    text=self._strings.menu.upload_substitutions(
+                                        date=current_date,
+                                        workbook_extension=self._config.settings.workbook_extension,
+                                    ),
+                                    reply_markup=self._keyboards.upload_substitutions(
+                                        date=current_date,
+                                    ),
+                                )
+
+                                await state.set_state(data.States.upload_substitutions)
+                                await state.set_data(
+                                    data={
+                                        "current_date": current_date,
+                                    },
+                                )
+                            case ["delete_substitutions", current_date]:
+                                current_date = datetime.datetime.strptime(current_date, "%d_%m_%y")
+
+                                current_substitutions = self._data.get_substitutions(current_date)
+
+                                if current_substitutions:
+                                    self._data.update_substitutions(
+                                        date=current_date,
+                                        substitutions=[],
+                                    )
+
+                                    current_substitutions = self._data.get_substitutions(current_date)
+
+                                    await self._bot.edit_message_text(
+                                        chat_id=call.message.chat.id,
+                                        message_id=call.message.message_id,
+                                        text=self._strings.menu.manage_substitutions(
+                                            date=current_date,
+                                            substitutions=current_substitutions,
+                                        ),
+                                        reply_markup=self._keyboards.manage_substitutions(
+                                            date=current_date,
+                                        ),
+                                    )
+
+                                    await self._bot.answer_callback_query(
+                                        callback_query_id=call.id,
+                                        text=self._strings.alert.substitutions_deleted(),
+                                        show_alert=True,
+                                    )
+                                else:
+                                    await self._bot.answer_callback_query(
+                                        callback_query_id=call.id,
+                                        text=self._strings.alert.substitutions_unavailable(),
+                                        show_alert=True,
+                                    )
+                            case ["export_logs"]:
                                 if self._config.settings.file_logging:
                                     logs_file = self._logger.file
 
                                     await self._bot.send_document(
                                         chat_id=call.message.chat.id,
-                                        message_thread_id=src.utils.get_message_thread_id(call.message),
+                                        message_thread_id=utils.get_message_thread_id(call.message),
                                         document=aiogram.types.BufferedInputFile(
                                             file=logs_file.read(),
                                             filename=logs_file.name,
@@ -155,7 +246,7 @@ class CallbacksRouter(aiogram.Router):
                             show_alert=True,
                         )
         except Exception as e:
-            if type(e) not in src.constants.IGNORED_EXCEPTIONS:
+            if type(e) not in constants.IGNORED_EXCEPTIONS:
                 self._logger.log_error(e)
         finally:
             await self._bot.answer_callback_query(

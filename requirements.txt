@@ -27,7 +27,7 @@ pydantic==2.12.5
 pydantic_core==2.41.5
 pyquoks==2.2.1.1
 requests==2.32.5
-schedule_parser @ git+https://github.com/diquoks/ScheduleParser.git@4a5697d2c281f085be2613e543f3f491b80990da
+schedule_parser @ git+https://github.com/elkollege/ScheduleParser.git@4acd24142da260f9f448a14c4166bafa8282378e
 typing-inspection==0.4.2
 typing_extensions==4.15.0
 urllib3==2.6.2

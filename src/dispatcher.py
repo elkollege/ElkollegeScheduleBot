@@ -1,11 +1,11 @@
 import aiogram
 import aiogram.client.default
 
-import src.callbacks
-import src.commands
-import src.constants
-import src.data
-import src.messages
+import callbacks
+import commands
+import constants
+import data
+import messages
 
 
 class AiogramDispatcher(aiogram.Dispatcher):
@@ -18,11 +18,11 @@ class AiogramDispatcher(aiogram.Dispatcher):
 
     def __init__(
             self,
-            strings_provider: src.data.StringsProvider,
-            keyboards_provider: src.data.KeyboardsProvider,
-            config_manager: src.data.ConfigManager,
-            data_manager: src.data.DataManager,
-            logger_service: src.data.LoggerService,
+            strings_provider: data.StringsProvider,
+            keyboards_provider: data.KeyboardsProvider,
+            config_manager: data.ConfigManager,
+            data_manager: data.DataManager,
+            logger_service: data.LoggerService,
     ) -> None:
         self._strings = strings_provider
         self._keyboards = keyboards_provider
@@ -51,14 +51,14 @@ class AiogramDispatcher(aiogram.Dispatcher):
         )
 
         self.include_routers(
-            src.commands.CommandsRouter(
+            commands.CommandsRouter(
                 strings_provider=self._strings,
                 keyboards_provider=self._keyboards,
                 config_manager=self._config,
                 logger_service=self._logger,
                 bot=self._bot,
             ),
-            src.callbacks.CallbacksRouter(
+            callbacks.CallbacksRouter(
                 strings_provider=self._strings,
                 keyboards_provider=self._keyboards,
                 config_manager=self._config,
@@ -66,7 +66,7 @@ class AiogramDispatcher(aiogram.Dispatcher):
                 logger_service=self._logger,
                 bot=self._bot,
             ),
-            src.messages.MessagesRouter(
+            messages.MessagesRouter(
                 strings_provider=self._strings,
                 keyboards_provider=self._keyboards,
                 config_manager=self._config,
@@ -95,7 +95,7 @@ class AiogramDispatcher(aiogram.Dispatcher):
     # region Handlers
 
     async def error_handler(self, event: aiogram.types.ErrorEvent) -> None:
-        if type(event.exception) not in src.constants.IGNORED_EXCEPTIONS:
+        if type(event.exception) not in constants.IGNORED_EXCEPTIONS:
             self._logger.log_error(
                 exception=event.exception,
             )

@@ -2,17 +2,17 @@ import aiogram
 import aiogram.filters
 import pyquoks
 
-import src.data
-import src.utils
+import data
+import utils
 
 
 class CommandsRouter(aiogram.Router):
     def __init__(
             self,
-            strings_provider: src.data.StringsProvider,
-            keyboards_provider: src.data.KeyboardsProvider,
-            config_manager: src.data.ConfigManager,
-            logger_service: src.data.LoggerService,
+            strings_provider: data.StringsProvider,
+            keyboards_provider: data.KeyboardsProvider,
+            config_manager: data.ConfigManager,
+            logger_service: data.LoggerService,
             bot: aiogram.Bot,
     ) -> None:
         self._strings = strings_provider
@@ -52,7 +52,7 @@ class CommandsRouter(aiogram.Router):
 
         await self._bot.send_message(
             chat_id=message.chat.id,
-            message_thread_id=src.utils.get_message_thread_id(message),
+            message_thread_id=utils.get_message_thread_id(message),
             text=self._strings.menu.start(
                 user=message.from_user,
             ),
@@ -74,7 +74,7 @@ class CommandsRouter(aiogram.Router):
         if is_admin:
             await self._bot.send_message(
                 chat_id=message.chat.id,
-                message_thread_id=src.utils.get_message_thread_id(message),
+                message_thread_id=utils.get_message_thread_id(message),
                 text=self._strings.menu.admin(
                     user=message.from_user,
                     time_started=pyquoks.utils.get_process_created_datetime(),

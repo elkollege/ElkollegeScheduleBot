@@ -1,4 +1,6 @@
 import datetime
+import json
+import os
 import textwrap
 
 import aiogram
@@ -8,9 +10,14 @@ import pyquoks
 import schedule_parser
 
 
+# region States
+
 class States(aiogram.fsm.state.StatesGroup):
     upload_schedule = aiogram.fsm.state.State()
+    upload_substitutions = aiogram.fsm.state.State()
 
+
+# endregion
 
 # region Providers
 
@@ -31,6 +38,14 @@ class StringsProvider(pyquoks.data.StringsProvider):
         @classmethod
         def schedule_deleted(cls) -> str:
             return "Расписание удалено!"
+
+        @classmethod
+        def substitutions_unavailable(cls) -> str:
+            return "Замены недоступны!"
+
+        @classmethod
+        def substitutions_deleted(cls) -> str:
+            return "Замены удалены!"
 
     class ButtonStrings(pyquoks.data.StringsProvider.Strings):
 
@@ -53,20 +68,16 @@ class StringsProvider(pyquoks.data.StringsProvider):
         # region /admin
 
         @classmethod
-        def manage_schedule(cls) -> str:
-            return "Расписание"
+        def substitutions(cls) -> str:
+            return "Замены"
 
         @classmethod
-        def upload_schedule(cls) -> str:
+        def upload(cls) -> str:
             return "Загрузить"
 
         @classmethod
-        def delete_schedule(cls) -> str:
+        def delete(cls) -> str:
             return "Удалить"
-
-        @classmethod
-        def manage_substitutions(cls) -> str:
-            return "Замены"
 
         @classmethod
         def export_logs(cls) -> str:
@@ -120,7 +131,7 @@ class StringsProvider(pyquoks.data.StringsProvider):
             )
 
         @classmethod
-        def manage_schedule(cls, schedule: list) -> str:
+        def manage_schedule(cls, schedule: list[schedule_parser.models.GroupSchedule]) -> str:
             return textwrap.dedent(
                 f"""\
                 <b>Управление расписанием</b>
@@ -131,12 +142,12 @@ class StringsProvider(pyquoks.data.StringsProvider):
             )
 
         @classmethod
-        def upload_schedule(cls, schedule_extension: str) -> str:
+        def upload_schedule(cls, workbook_extension: str) -> str:
             return textwrap.dedent(
                 f"""\
                 <b>Загрузка расписания</b>
                 
-                Отправьте файл с расширением <b>\".{schedule_extension}\"</b>
+                Отправьте файл с расширением <b>\".{workbook_extension}\"</b>
                 """,
             )
 
@@ -151,12 +162,71 @@ class StringsProvider(pyquoks.data.StringsProvider):
             )
 
         @classmethod
-        def upload_schedule_success(cls, schedule: list) -> str:
+        def upload_schedule_success(cls, schedule: list[schedule_parser.models.GroupSchedule]) -> str:
             return textwrap.dedent(
                 f"""\
                 <b>Расписание загружено!</b>
                 
                 Учебных групп: <b>{len(schedule)}</b>
+                """,
+            )
+
+        @classmethod
+        def select_substitutions(cls) -> str:
+            return textwrap.dedent(
+                f"""\
+                <b>Управление заменами</b>
+                
+                Выберите нужную дату:
+                """,
+            )
+
+        @classmethod
+        def manage_substitutions(
+                cls,
+                date: datetime.datetime,
+                substitutions: list[schedule_parser.models.Substitution],
+        ) -> str:
+            return textwrap.dedent(
+                f"""\
+                <b>Управление заменами на {date.strftime("%d.%m.%y")}</b>
+                
+                Статус замен: <b>{"Загружены" if substitutions else "Отсутствуют"}</b>
+                {f"Замен: <b>{len(substitutions)}</b>" if substitutions else ""}
+                """,
+            )
+
+        @classmethod
+        def upload_substitutions(cls, date: datetime.datetime, workbook_extension: str) -> str:
+            return textwrap.dedent(
+                f"""\
+                <b>Загрузка замен на {date.strftime("%d.%m.%y")}</b>
+                
+                Отправьте файл с расширением <b>\".{workbook_extension}\"</b>
+                """,
+            )
+
+        @classmethod
+        def upload_substitutions_error(cls) -> str:
+            return textwrap.dedent(
+                f"""\
+                <b>Возникла ошибка!</b>
+                
+                Не удалось обработать замены.
+                """,
+            )
+
+        @classmethod
+        def upload_substitutions_success(
+                cls,
+                date: datetime.datetime,
+                substitutions: list[schedule_parser.models.Substitution],
+        ) -> str:
+            return textwrap.dedent(
+                f"""\
+                <b>Замены на {date.strftime("%d.%m.%y")} загружены!</b>
+                
+                Замен: <b>{len(substitutions)}</b>
                 """,
             )
 
@@ -203,32 +273,51 @@ class ButtonsProvider:
 
     def manage_schedule(self) -> aiogram.types.InlineKeyboardButton:
         return aiogram.types.InlineKeyboardButton(
-            text=self._strings.button.manage_schedule(),
+            text=self._strings.button.schedule(),
             callback_data="manage_schedule",
         )
 
-    def manage_substitutions(self) -> aiogram.types.InlineKeyboardButton:
+    def upload_schedule(self) -> aiogram.types.InlineKeyboardButton:
         return aiogram.types.InlineKeyboardButton(
-            text=self._strings.button.manage_substitutions(),
-            callback_data="manage_substitutions",
+            text=self._strings.button.upload(),
+            callback_data="upload_schedule",
+        )
+
+    def delete_schedule(self) -> aiogram.types.InlineKeyboardButton:
+        return aiogram.types.InlineKeyboardButton(
+            text=self._strings.button.delete(),
+            callback_data="delete_schedule",
+        )
+
+    def select_substitutions(self) -> aiogram.types.InlineKeyboardButton:
+        return aiogram.types.InlineKeyboardButton(
+            text=self._strings.button.substitutions(),
+            callback_data="select_substitutions",
+        )
+
+    @staticmethod
+    def manage_substitutions(date: datetime.datetime) -> aiogram.types.InlineKeyboardButton:
+        return aiogram.types.InlineKeyboardButton(
+            text=date.strftime("%d.%m.%y"),
+            callback_data=f"manage_substitutions {date.strftime("%d_%m_%y")}",
+        )
+
+    def upload_substitutions(self, date: datetime.datetime) -> aiogram.types.InlineKeyboardButton:
+        return aiogram.types.InlineKeyboardButton(
+            text=self._strings.button.upload(),
+            callback_data=f"upload_substitutions {date.strftime("%d_%m_%y")}",
+        )
+
+    def delete_substitutions(self, date: datetime.datetime) -> aiogram.types.InlineKeyboardButton:
+        return aiogram.types.InlineKeyboardButton(
+            text=self._strings.button.delete(),
+            callback_data=f"delete_substitutions {date.strftime("%d_%m_%y")}",
         )
 
     def export_logs(self) -> aiogram.types.InlineKeyboardButton:
         return aiogram.types.InlineKeyboardButton(
             text=self._strings.button.export_logs(),
             callback_data="export_logs",
-        )
-
-    def upload_schedule(self) -> aiogram.types.InlineKeyboardButton:
-        return aiogram.types.InlineKeyboardButton(
-            text=self._strings.button.upload_schedule(),
-            callback_data="upload_schedule",
-        )
-
-    def delete_schedule(self) -> aiogram.types.InlineKeyboardButton:
-        return aiogram.types.InlineKeyboardButton(
-            text=self._strings.button.delete_schedule(),
-            callback_data="delete_schedule",
         )
 
     # endregion
@@ -253,10 +342,28 @@ class ButtonsProvider:
             callback_data="manage_schedule",
         )
 
+    def back_to_select_substitutions(self) -> aiogram.types.InlineKeyboardButton:
+        return aiogram.types.InlineKeyboardButton(
+            text=self._strings.button.back(),
+            callback_data="select_substitutions",
+        )
+
+    def back_to_manage_substitutions(self, date: datetime.datetime) -> aiogram.types.InlineKeyboardButton:
+        return aiogram.types.InlineKeyboardButton(
+            text=self._strings.button.back(),
+            callback_data=f"manage_substitutions {date.strftime("%d_%m_%y")}",
+        )
+
     def cancel_to_manage_schedule(self) -> aiogram.types.InlineKeyboardButton:
         return aiogram.types.InlineKeyboardButton(
             text=self._strings.button.cancel(),
             callback_data="manage_schedule",
+        )
+
+    def cancel_to_manage_substitutions(self, date: datetime.datetime) -> aiogram.types.InlineKeyboardButton:
+        return aiogram.types.InlineKeyboardButton(
+            text=self._strings.button.cancel(),
+            callback_data=f"manage_substitutions {date.strftime("%d_%m_%y")}",
         )
 
     # endregion
@@ -281,7 +388,7 @@ class KeyboardsProvider:
 
     def admin(self) -> aiogram.types.InlineKeyboardMarkup:
         markup_builder = aiogram.utils.keyboard.InlineKeyboardBuilder()
-        markup_builder.row(self._buttons.manage_schedule(), self._buttons.manage_substitutions())
+        markup_builder.row(self._buttons.manage_schedule(), self._buttons.select_substitutions())
         markup_builder.row(self._buttons.export_logs())
 
         return markup_builder.as_markup()
@@ -302,6 +409,38 @@ class KeyboardsProvider:
     def upload_schedule_ended(self) -> aiogram.types.InlineKeyboardMarkup:
         markup_builder = aiogram.utils.keyboard.InlineKeyboardBuilder()
         markup_builder.row(self._buttons.back_to_manage_schedule())
+
+        return markup_builder.as_markup()
+
+    def select_substitutions(self) -> aiogram.types.InlineKeyboardMarkup:
+        current_date = datetime.datetime.now()
+
+        markup_builder = aiogram.utils.keyboard.InlineKeyboardBuilder()
+        markup_builder.row(
+            self._buttons.manage_substitutions(current_date),
+            self._buttons.manage_substitutions(current_date + datetime.timedelta(days=1)),
+            self._buttons.manage_substitutions(current_date + datetime.timedelta(days=2)),
+        )
+        markup_builder.row(self._buttons.back_to_admin())
+
+        return markup_builder.as_markup()
+
+    def manage_substitutions(self, date: datetime.datetime) -> aiogram.types.InlineKeyboardMarkup:
+        markup_builder = aiogram.utils.keyboard.InlineKeyboardBuilder()
+        markup_builder.row(self._buttons.upload_substitutions(date), self._buttons.delete_substitutions(date))
+        markup_builder.row(self._buttons.back_to_select_substitutions())
+
+        return markup_builder.as_markup()
+
+    def upload_substitutions(self, date: datetime.datetime) -> aiogram.types.InlineKeyboardMarkup:
+        markup_builder = aiogram.utils.keyboard.InlineKeyboardBuilder()
+        markup_builder.row(self._buttons.cancel_to_manage_substitutions(date))
+
+        return markup_builder.as_markup()
+
+    def upload_substitutions_ended(self, date: datetime.datetime) -> aiogram.types.InlineKeyboardMarkup:
+        markup_builder = aiogram.utils.keyboard.InlineKeyboardBuilder()
+        markup_builder.row(self._buttons.back_to_manage_substitutions(date))
 
         return markup_builder.as_markup()
 
@@ -343,6 +482,37 @@ class DataManager(pyquoks.data.DataManager):
     }
 
     schedule: list[schedule_parser.models.GroupSchedule]
+
+    def get_substitutions(self, date: datetime.datetime) -> list[schedule_parser.models.Substitution] | None:
+        try:
+            with open(self._PATH + self._FILENAME.format(f"substitutions_{date.strftime("%d_%m_%y")}"), "rb") as file:
+                data = json.loads(file.read())
+
+                return [schedule_parser.models.Substitution(**model) for model in data]
+        except Exception:
+            return None
+
+    def update_substitutions(
+            self,
+            date: datetime.datetime,
+            substitutions: list[schedule_parser.models.Substitution],
+    ) -> None:
+        os.makedirs(
+            name=self._PATH,
+            exist_ok=True,
+        )
+
+        with open(
+                self._PATH + self._FILENAME.format(f"substitutions_{date.strftime("%d_%m_%y")}"),
+                "w",
+                encoding="utf-8",
+        ) as file:
+            json.dump(
+                [model.model_dump() for model in substitutions],
+                fp=file,
+                ensure_ascii=False,
+                indent=2,
+            )
 
 
 # endregion
