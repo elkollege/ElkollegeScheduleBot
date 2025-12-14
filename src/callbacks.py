@@ -56,6 +56,15 @@ class CallbacksRouter(aiogram.Router):
 
         try:
             match call.data.split():
+                case ["start"]:
+                    await self._bot.edit_message_text(
+                        chat_id=call.message.chat.id,
+                        message_id=call.message.message_id,
+                        text=self._strings.menu.start(
+                            user=call.from_user,
+                        ),
+                        reply_markup=self._keyboards.start(),
+                    )
                 case ["schedule"]:
                     if self._data.schedule:
                         ...  # TODO
@@ -65,15 +74,41 @@ class CallbacksRouter(aiogram.Router):
                             text=self._strings.alert.schedule_unavailable(),
                             show_alert=True,
                         )
-                case ["select_group"]:
+                case ["view_groups", current_page]:
+                    current_page = int(current_page)
+
                     if self._data.schedule:
-                        ...  # TODO
+                        await self._bot.edit_message_text(
+                            chat_id=call.message.chat.id,
+                            message_id=call.message.message_id,
+                            text=self._strings.menu.view_groups(),
+                            reply_markup=self._keyboards.view_groups(
+                                groups=self._data.schedule,
+                                page=current_page,
+                            ),
+                        )
                     else:
                         await self._bot.answer_callback_query(
                             callback_query_id=call.id,
                             text=self._strings.alert.schedule_unavailable(),
                             show_alert=True,
                         )
+                case ["select_group", *group]:
+                    group = " ".join(group)
+
+                    ... # TODO
+
+                    await self._bot.answer_callback_query(
+                        callback_query_id=call.id,
+                        text=self._strings.alert.group_selected(
+                            group=group,
+                        ),
+                        show_alert=True,
+                    )
+                case ["answer_callback"]:
+                    await self._bot.answer_callback_query(
+                        callback_query_id=call.id,
+                    )
                 case _:
                     if is_admin:
                         match call.data.split():
