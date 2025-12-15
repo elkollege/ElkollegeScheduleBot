@@ -96,7 +96,7 @@ class CallbacksRouter(aiogram.Router):
                 case ["select_group", *group]:
                     group = " ".join(group)
 
-                    ... # TODO
+                    # TODO
 
                     await self._bot.answer_callback_query(
                         callback_query_id=call.id,

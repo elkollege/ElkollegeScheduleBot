@@ -1,6 +1,6 @@
 ﻿# ElkollegeScheduleBot
 
-#### Ты думал тут что-то будет?
+#### Telegram-бот для просмотра расписания Электростальского колледжа
 
 ---
 
@@ -44,7 +44,7 @@
 ##### Клонируйте репозиторий git
 
 ```bash
-git clone https://github.com/diquoks/ElkollegeScheduleBot.git
+git clone https://github.com/elkollege/ElkollegeScheduleBot.git
 ```
 
 ##### Перейдите в корневую директорию

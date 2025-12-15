@@ -31,9 +31,7 @@ class CommandsRouter(aiogram.Router):
         )
         self.message.register(
             self.admin_handler,
-            aiogram.filters.Command(
-                "admin",
-            ),
+            aiogram.filters.Command("admin"),
         )
 
         self._logger.info(f"{self.name} initialized!")
