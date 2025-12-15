@@ -12,6 +12,7 @@ import pyquoks
 import schedule_parser
 
 import constants
+import models
 
 
 # region States
@@ -674,6 +675,84 @@ class DataManager(pyquoks.data.DataManager):
                 ensure_ascii=False,
                 indent=2,
             )
+
+
+class DatabaseManager(pyquoks.data.DatabaseManager):
+    class UsersDatabase(pyquoks.data.DatabaseManager.Database):
+        _NAME = "users"
+
+        _SQL = textwrap.dedent(
+            f"""\
+            CREATE TABLE IF NOT EXISTS {_NAME} (
+            id INTEGER PRIMARY KEY NOT NULL,
+            `group` TEXT
+            )
+            """,
+        )
+
+        def add_user(self, user: models.User) -> None:
+            cursor = self.cursor()
+
+            cursor.execute(
+                textwrap.dedent(
+                    f"""\
+                    INSERT OR IGNORE INTO {self._NAME} (
+                    id,
+                    `group`
+                    )
+                    VALUES (?, ?)
+                    """,
+                ),
+                (
+                    user.id,
+                    user.group,
+                ),
+            )
+
+            self.commit()
+
+        def get_user(self, user_id: int) -> models.User | None:
+            cursor = self.cursor()
+
+            cursor.execute(
+                textwrap.dedent(
+                    f"""\
+                    SELECT * FROM {self._NAME} WHERE id = ?
+                    """,
+                ),
+                (
+                    user_id,
+                ),
+            )
+            result = cursor.fetchone()
+
+            if result:
+                return models.User(**dict(result))
+            else:
+                return None
+
+        def edit_group(self, user_id: int, group: str) -> None:
+            cursor = self.cursor()
+
+            cursor.execute(
+                textwrap.dedent(
+                    f"""\
+                    UPDATE {self._NAME} SET `group` = ? WHERE id = ?
+                    """,
+                ),
+                (
+                    group,
+                    user_id,
+                ),
+            )
+
+            self.commit()
+
+    _OBJECTS = {
+        "users": UsersDatabase,
+    }
+
+    users: UsersDatabase
 
 
 # endregion

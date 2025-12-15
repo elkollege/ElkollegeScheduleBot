@@ -3,6 +3,7 @@ import aiogram.filters
 import pyquoks
 
 import data
+import models
 import utils
 
 
@@ -12,12 +13,14 @@ class CommandsRouter(aiogram.Router):
             strings_provider: data.StringsProvider,
             keyboards_provider: data.KeyboardsProvider,
             config_manager: data.ConfigManager,
+            database_manager: data.DatabaseManager,
             logger_service: data.LoggerService,
             bot: aiogram.Bot,
     ) -> None:
         self._strings = strings_provider
         self._keyboards = keyboards_provider
         self._config = config_manager
+        self._database = database_manager
         self._logger = logger_service
         self._bot = bot
 
@@ -46,6 +49,13 @@ class CommandsRouter(aiogram.Router):
         self._logger.log_user_interaction(
             user=message.from_user,
             interaction=command.text,
+        )
+
+        self._database.users.add_user(
+            user=models.User(
+                id=message.from_user.id,
+                group=None,
+            ),
         )
 
         await self._bot.send_message(

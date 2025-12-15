@@ -22,12 +22,14 @@ class AiogramDispatcher(aiogram.Dispatcher):
             keyboards_provider: data.KeyboardsProvider,
             config_manager: data.ConfigManager,
             data_manager: data.DataManager,
+            database_manager: data.DatabaseManager,
             logger_service: data.LoggerService,
     ) -> None:
         self._strings = strings_provider
         self._keyboards = keyboards_provider
         self._config = config_manager
         self._data = data_manager
+        self._database = database_manager
         self._logger = logger_service
         self._bot = aiogram.Bot(
             token=self._config.settings.bot_token,
@@ -55,6 +57,7 @@ class AiogramDispatcher(aiogram.Dispatcher):
                 strings_provider=self._strings,
                 keyboards_provider=self._keyboards,
                 config_manager=self._config,
+                database_manager=self._database,
                 logger_service=self._logger,
                 bot=self._bot,
             ),
@@ -63,6 +66,7 @@ class AiogramDispatcher(aiogram.Dispatcher):
                 keyboards_provider=self._keyboards,
                 config_manager=self._config,
                 data_manager=self._data,
+                database_manager=self._database,
                 logger_service=self._logger,
                 bot=self._bot,
             ),

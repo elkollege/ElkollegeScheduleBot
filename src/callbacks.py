@@ -8,6 +8,7 @@ import pyquoks
 
 import constants
 import data
+import models
 import utils
 
 
@@ -18,6 +19,7 @@ class CallbacksRouter(aiogram.Router):
             keyboards_provider: data.KeyboardsProvider,
             config_manager: data.ConfigManager,
             data_manager: data.DataManager,
+            database_manager: data.DatabaseManager,
             logger_service: data.LoggerService,
             bot: aiogram.Bot,
     ) -> None:
@@ -25,6 +27,7 @@ class CallbacksRouter(aiogram.Router):
         self._keyboards = keyboards_provider
         self._config = config_manager
         self._data = data_manager
+        self._database = database_manager
         self._logger = logger_service
         self._bot = bot
 
@@ -54,6 +57,17 @@ class CallbacksRouter(aiogram.Router):
 
         await state.clear()
 
+        self._database.users.add_user(
+            user=models.User(
+                id=call.from_user.id,
+                group=None,
+            ),
+        )
+
+        current_user = self._database.users.get_user(
+            user_id=call.from_user.id,
+        )
+
         try:
             match call.data.split():
                 case ["start"]:
@@ -67,7 +81,7 @@ class CallbacksRouter(aiogram.Router):
                     )
                 case ["schedule"]:
                     if self._data.schedule:
-                        ...  # TODO
+                        ...  # TODO: просмотр расписания
                     else:
                         await self._bot.answer_callback_query(
                             callback_query_id=call.id,
@@ -96,7 +110,10 @@ class CallbacksRouter(aiogram.Router):
                 case ["select_group", *group]:
                     group = " ".join(group)
 
-                    # TODO
+                    self._database.users.edit_group(
+                        user_id=current_user.id,
+                        group=group,
+                    )
 
                     await self._bot.answer_callback_query(
                         callback_query_id=call.id,
