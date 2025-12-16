@@ -1,6 +1,6 @@
 ﻿# ElkollegeScheduleBot
 
-#### Telegram-бот для просмотра расписания Электростальского колледжа
+#### Просмотр актуального расписания Электростальского колледжа
 
 ---
 
@@ -11,7 +11,6 @@
     - [Прочие ссылки](#прочие-ссылки)
 - [Сборка и запуск](#сборка-и-запуск)
     - [Необходимые компоненты](#необходимые-компоненты)
-    - [Первоначальная настройка](#первоначальная-настройка)
     - [config.ini](#configini)
         - [Раздел `Settings`](#раздел-settings)
     - [Docker](#docker)
@@ -38,36 +37,6 @@
 - [Docker Desktop](https://docs.docker.com/desktop)
 - [Git](https://git-scm.com/downloads)
 - [Python 3.14](https://www.python.org/downloads)
-
-### Первоначальная настройка
-
-##### Клонируйте репозиторий git
-
-```bash
-git clone https://github.com/elkollege/ElkollegeScheduleBot.git
-```
-
-##### Перейдите в корневую директорию
-
-```bash
-cd ElkollegeScheduleBot
-```
-
-##### Установите зависимости
-
-```bash
-pip install -r requirements.txt
-```
-
-##### Сгенерируйте файл `config.ini`
-
-```bash
-cd src ; python main.py
-```
-
-##### Заполните `ElkollegeScheduleBot/src/config.ini` [следуя инструкции](#configini)
-
-##### Используйте руководство для [Docker](#docker)
 
 ### config.ini
 
