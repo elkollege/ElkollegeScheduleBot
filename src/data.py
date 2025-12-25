@@ -149,6 +149,30 @@ class StringsProvider(pyquoks.data.StringsProvider):
             )
 
         @classmethod
+        def schedule(cls) -> str:
+            return textwrap.dedent(
+                f"""\
+                <b>Просмотр расписания</b>
+                
+                Выберите нужную дату:
+                """,
+            )
+
+        @classmethod
+        def view_schedule(
+                cls,
+                date: datetime.datetime,
+                bells: schedule_parser.models.BellsVariant,
+                schedule: list[schedule_parser.models.Period],
+        ) -> str:
+            # different format style is used to bypass unnecessary leading whitespaces
+            return textwrap.dedent(
+                f"""\
+                <b>Расписание на {date.strftime("%d.%m.%y")}</b>\n\n{"\n".join(bells.format_period(period) for period in schedule)}
+                """,
+            )
+
+        @classmethod
         def view_groups(cls) -> str:
             return textwrap.dedent(
                 f"""\
@@ -300,6 +324,13 @@ class ButtonsProvider:
             callback_data="schedule",
         )
 
+    @staticmethod
+    def view_schedule(date: datetime.datetime) -> aiogram.types.InlineKeyboardButton:
+        return aiogram.types.InlineKeyboardButton(
+            text=date.strftime("%d.%m.%y"),
+            callback_data=f"view_schedule {date.strftime("%d_%m_%y")}",
+        )
+
     def view_groups(self) -> aiogram.types.InlineKeyboardButton:
         return aiogram.types.InlineKeyboardButton(
             text=self._strings.button.view_groups(),
@@ -380,6 +411,12 @@ class ButtonsProvider:
         return aiogram.types.InlineKeyboardButton(
             text=self._strings.button.back(),
             callback_data="start",
+        )
+
+    def back_to_schedule(self) -> aiogram.types.InlineKeyboardButton:
+        return aiogram.types.InlineKeyboardButton(
+            text=self._strings.button.back(),
+            callback_data="schedule",
         )
 
     def back_to_admin(self) -> aiogram.types.InlineKeyboardButton:
@@ -501,6 +538,24 @@ class KeyboardsProvider:
             self._buttons.view_groups(),
             self._buttons.settings(),
         )
+
+        return markup_builder.as_markup()
+
+    def schedule(self) -> aiogram.types.InlineKeyboardMarkup:
+        current_date = datetime.datetime.now()
+
+        markup_builder = aiogram.utils.keyboard.InlineKeyboardBuilder()
+        markup_builder.row(
+            self._buttons.view_schedule(current_date),
+            self._buttons.view_schedule(current_date + datetime.timedelta(days=1)),
+        )
+        markup_builder.row(self._buttons.back_to_start())
+
+        return markup_builder.as_markup()
+
+    def view_schedule(self) -> aiogram.types.InlineKeyboardMarkup:
+        markup_builder = aiogram.utils.keyboard.InlineKeyboardBuilder()
+        markup_builder.row(self._buttons.back_to_schedule())
 
         return markup_builder.as_markup()
 
@@ -640,19 +695,36 @@ class ConfigManager(pyquoks.data.ConfigManager):
 
 class DataManager(pyquoks.data.DataManager):
     _OBJECTS = {
+        "bells": list[schedule_parser.models.BellsVariant],
         "schedule": list[schedule_parser.models.GroupSchedule],
     }
 
+    bells: list[schedule_parser.models.BellsVariant]
     schedule: list[schedule_parser.models.GroupSchedule]
 
-    def get_substitutions(self, date: datetime.datetime) -> list[schedule_parser.models.Substitution] | None:
+    def get_bells_variant_by_weekday(
+            self,
+            weekday: schedule_parser.models.Weekday
+    ) -> schedule_parser.models.BellsVariant:
+        match weekday:
+            case schedule_parser.models.Weekday.MONDAY:
+                return self.bells[models.BellsVariants.Monday.value]
+            case schedule_parser.models.Weekday.WEDNESDAY:
+                return self.bells[models.BellsVariants.Wednesday.value]
+            case schedule_parser.models.Weekday.TUESDAY | schedule_parser.models.Weekday.THURSDAY | \
+                 schedule_parser.models.Weekday.FRIDAY | schedule_parser.models.Weekday.SATURDAY:
+                return self.bells[models.BellsVariants.Other.value]
+            case schedule_parser.models.Weekday.SUNDAY:
+                raise ValueError
+
+    def get_substitutions(self, date: datetime.datetime) -> list[schedule_parser.models.Substitution]:
         try:
             with open(self._PATH + self._FILENAME.format(f"substitutions_{date.strftime("%d_%m_%y")}"), "rb") as file:
                 data = json.loads(file.read())
 
                 return [schedule_parser.models.Substitution(**model) for model in data]
         except Exception:
-            return None
+            return []
 
     def update_substitutions(
             self,

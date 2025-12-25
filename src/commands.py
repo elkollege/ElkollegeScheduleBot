@@ -54,7 +54,7 @@ class CommandsRouter(aiogram.Router):
         self._database.users.add_user(
             user=models.User(
                 id=message.from_user.id,
-                group=None,
+                **models.User._default_values(),
             ),
         )
 

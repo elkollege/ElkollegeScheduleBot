@@ -5,6 +5,7 @@ import aiogram.exceptions
 import aiogram.filters
 import aiogram.fsm.context
 import pyquoks
+import schedule_parser
 
 import constants
 import data
@@ -60,7 +61,7 @@ class CallbacksRouter(aiogram.Router):
         self._database.users.add_user(
             user=models.User(
                 id=call.from_user.id,
-                group=None,
+                **models.User._default_values(),
             ),
         )
 
@@ -81,13 +82,40 @@ class CallbacksRouter(aiogram.Router):
                     )
                 case ["schedule"]:
                     if self._data.schedule:
-                        ...  # TODO: просмотр расписания
+                        await self._bot.edit_message_text(
+                            chat_id=call.message.chat.id,
+                            message_id=call.message.message_id,
+                            text=self._strings.menu.schedule(),
+                            reply_markup=self._keyboards.schedule(),
+                        )
                     else:
                         await self._bot.answer_callback_query(
                             callback_query_id=call.id,
                             text=self._strings.alert.schedule_unavailable(),
                             show_alert=True,
                         )
+                case ["view_schedule", current_date]:
+                    current_date = datetime.datetime.strptime(current_date, "%d_%m_%y")
+
+                    await self._bot.edit_message_text(
+                        chat_id=call.message.chat.id,
+                        message_id=call.message.message_id,
+                        text=self._strings.menu.view_schedule(
+                            date=current_date,
+                            bells=self._data.get_bells_variant_by_weekday(
+                                weekday=schedule_parser.models.Weekday(current_date.weekday())
+                            ),
+                            schedule=schedule_parser.utils.get_schedule_with_substitutions(
+                                schedule=self._data.schedule,
+                                substitutions=self._data.get_substitutions(
+                                    date=current_date,
+                                ),
+                                group=current_user.group,
+                                date=current_date,
+                            ),
+                        ),
+                        reply_markup=self._keyboards.view_schedule(),
+                    )
                 case ["view_groups", current_page]:
                     current_page = int(current_page)
 
