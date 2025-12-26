@@ -1,5 +1,3 @@
-import datetime
-
 import aiogram
 import aiogram.exceptions
 import aiogram.filters
@@ -80,13 +78,13 @@ class CallbacksRouter(aiogram.Router):
                         ),
                         reply_markup=self._keyboards.start(),
                     )
-                case ["schedule"]:
+                case ["view_schedules"]:
                     if self._data.schedule:
                         await self._bot.edit_message_text(
                             chat_id=call.message.chat.id,
                             message_id=call.message.message_id,
-                            text=self._strings.menu.schedule(),
-                            reply_markup=self._keyboards.schedule(),
+                            text=self._strings.menu.view_schedules(),
+                            reply_markup=self._keyboards.view_schedules(),
                         )
                     else:
                         await self._bot.answer_callback_query(
@@ -94,13 +92,13 @@ class CallbacksRouter(aiogram.Router):
                             text=self._strings.alert.schedule_unavailable(),
                             show_alert=True,
                         )
-                case ["view_schedule", current_date]:
-                    current_date = datetime.datetime.strptime(current_date, "%d_%m_%y")
+                case ["schedule", current_date]:
+                    current_date = utils.get_date_from_callback(current_date)
 
                     await self._bot.edit_message_text(
                         chat_id=call.message.chat.id,
                         message_id=call.message.message_id,
-                        text=self._strings.menu.view_schedule(
+                        text=self._strings.menu.schedule(
                             date=current_date,
                             bells=self._data.get_bells_variant_by_weekday(
                                 weekday=schedule_parser.models.Weekday(current_date.weekday())
@@ -114,7 +112,7 @@ class CallbacksRouter(aiogram.Router):
                                 date=current_date,
                             ),
                         ),
-                        reply_markup=self._keyboards.view_schedule(),
+                        reply_markup=self._keyboards.schedule(),
                     )
                 case ["view_groups", current_page]:
                     current_page = int(current_page)
@@ -135,7 +133,7 @@ class CallbacksRouter(aiogram.Router):
                             text=self._strings.alert.schedule_unavailable(),
                             show_alert=True,
                         )
-                case ["select_group", *group]:
+                case ["group", *group]:
                     group = " ".join(group)
 
                     self._database.users.edit_group(
@@ -213,15 +211,15 @@ class CallbacksRouter(aiogram.Router):
                                         text=self._strings.alert.schedule_unavailable(),
                                         show_alert=True,
                                     )
-                            case ["select_substitutions"]:
+                            case ["view_substitutions"]:
                                 await self._bot.edit_message_text(
                                     chat_id=call.message.chat.id,
                                     message_id=call.message.message_id,
-                                    text=self._strings.menu.select_substitutions(),
+                                    text=self._strings.menu.view_substitutions(),
                                     reply_markup=self._keyboards.select_substitutions(),
                                 )
                             case ["manage_substitutions", current_date]:
-                                current_date = datetime.datetime.strptime(current_date, "%d_%m_%y")
+                                current_date = utils.get_date_from_callback(current_date)
 
                                 current_substitutions = self._data.get_substitutions(current_date)
 
@@ -237,7 +235,7 @@ class CallbacksRouter(aiogram.Router):
                                     ),
                                 )
                             case ["upload_substitutions", current_date]:
-                                current_date = datetime.datetime.strptime(current_date, "%d_%m_%y")
+                                current_date = utils.get_date_from_callback(current_date)
 
                                 await self._bot.edit_message_text(
                                     chat_id=call.message.chat.id,
@@ -258,7 +256,7 @@ class CallbacksRouter(aiogram.Router):
                                     },
                                 )
                             case ["delete_substitutions", current_date]:
-                                current_date = datetime.datetime.strptime(current_date, "%d_%m_%y")
+                                current_date = utils.get_date_from_callback(current_date)
 
                                 current_substitutions = self._data.get_substitutions(current_date)
 
