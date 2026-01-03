@@ -148,6 +148,12 @@ class CallbacksRouter(aiogram.Router):
                         ),
                         show_alert=True,
                     )
+                case ["settings"]:
+                    await self._bot.answer_callback_query(
+                        callback_query_id=call.id,
+                        text=self._strings.alert.settings_unavailable(),
+                        show_alert=True,
+                    )
                 case ["answer_callback"]:
                     await self._bot.answer_callback_query(
                         callback_query_id=call.id,

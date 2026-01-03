@@ -36,6 +36,10 @@ class StringsProvider(pyquoks.data.StringsProvider):
         def group_selected(cls, group: str) -> str:
             return f"Выбрана группа \"{group}\"!"
 
+        @classmethod
+        def settings_unavailable(cls) -> str:
+            return f"Настройки временно недоступны!"
+
         # endregion
 
         # region /admin
@@ -175,12 +179,8 @@ class StringsProvider(pyquoks.data.StringsProvider):
             else:
                 readable_schedule = "*Пары отсутствуют*"
 
-            # different format style is used to avoid unnecessary leading whitespaces
-            return textwrap.dedent(
-                f"""\
-                <b>Расписание на {utils.get_readable_date(date)}</b>\n\n{readable_schedule}
-                """,
-            )
+            # different string format is used to avoid unnecessary leading whitespaces
+            return f"<b>Расписание на {utils.get_readable_date(date)}</b>\n\n{readable_schedule}"
 
         @classmethod
         def view_groups(cls) -> str:
@@ -310,12 +310,6 @@ class StringsProvider(pyquoks.data.StringsProvider):
             )
 
         # endregion
-
-    _OBJECTS = {
-        "alert": AlertStrings,
-        "button": ButtonStrings,
-        "menu": MenuStrings,
-    }
 
     alert: AlertStrings
     button: ButtonStrings
@@ -696,18 +690,10 @@ class ConfigManager(pyquoks.data.ConfigManager):
         skip_updates: bool
         workbook_extension: str
 
-    _OBJECTS = {
-        "settings": SettingsConfig,
-    }
-
     settings: SettingsConfig
 
 
 class DataManager(pyquoks.data.DataManager):
-    _OBJECTS = {
-        "bells": list[schedule_parser.models.BellsVariant],
-        "schedule": list[schedule_parser.models.GroupSchedule],
-    }
 
     bells: list[schedule_parser.models.BellsVariant]
     schedule: list[schedule_parser.models.GroupSchedule]
@@ -718,19 +704,21 @@ class DataManager(pyquoks.data.DataManager):
     ) -> schedule_parser.models.BellsVariant:
         match weekday:
             case schedule_parser.models.Weekday.MONDAY:
-                return self.bells[models.BellsVariants.Monday.value]
+                return self.bells[models.BellsType.MONDAY.value]
             case schedule_parser.models.Weekday.WEDNESDAY:
-                return self.bells[models.BellsVariants.Wednesday.value]
+                return self.bells[models.BellsType.WEDNESDAY.value]
             case schedule_parser.models.Weekday.TUESDAY | schedule_parser.models.Weekday.THURSDAY | \
                  schedule_parser.models.Weekday.FRIDAY | schedule_parser.models.Weekday.SATURDAY:
-                return self.bells[models.BellsVariants.Other.value]
+                return self.bells[models.BellsType.OTHER.value]
             case schedule_parser.models.Weekday.SUNDAY:
                 raise ValueError
 
     def get_substitutions(self, date: datetime.datetime) -> list[schedule_parser.models.Substitution]:
         try:
-            with open(self._PATH + self._FILENAME.format(f"substitutions_{utils.get_callback_date(date)}"),
-                      "rb") as file:
+            with open(
+                    self._PATH + self._FILENAME.format(f"substitutions_{utils.get_callback_date(date)}"),
+                    "rb",
+            ) as file:
                 data = json.loads(file.read())
 
                 return [schedule_parser.models.Substitution(**model) for model in data]
@@ -830,10 +818,6 @@ class DatabaseManager(pyquoks.data.DatabaseManager):
             )
 
             self.commit()
-
-    _OBJECTS = {
-        "users": UsersDatabase,
-    }
 
     users: UsersDatabase
 
