@@ -1,5 +1,5 @@
 /.venv/
+/.env
 */data/
 */db/
 */logs/
-*/config.ini

@@ -6,6 +6,7 @@ import dispatcher
 
 
 async def main() -> None:
+    environment_provider = data.EnvironmentProvider()
     strings_provider = data.StringsProvider()
     config_manager = data.ConfigManager()
     data_manager = data.DataManager()
@@ -18,6 +19,7 @@ async def main() -> None:
     )
 
     bot = dispatcher.AiogramDispatcher(
+        environment_provider=environment_provider,
         strings_provider=strings_provider,
         keyboards_provider=keyboards_provider,
         config_manager=config_manager,

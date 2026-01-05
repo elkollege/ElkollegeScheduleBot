@@ -27,6 +27,10 @@ class States(aiogram.fsm.state.StatesGroup):
 
 # region Providers
 
+class EnvironmentProvider(pyquoks.data.EnvironmentProvider):
+    TELEGRAM_BOT_TOKEN: str
+
+
 class StringsProvider(pyquoks.data.StringsProvider):
     class AlertStrings(pyquoks.data.StringsProvider.Strings):
 
@@ -678,14 +682,12 @@ class ConfigManager(pyquoks.data.ConfigManager):
 
         _VALUES = {
             "admins_list": list,
-            "bot_token": str,
             "file_logging": bool,
             "skip_updates": bool,
             "workbook_extension": str,
         }
 
         admins_list: list
-        bot_token: str
         file_logging: bool
         skip_updates: bool
         workbook_extension: str
@@ -694,7 +696,6 @@ class ConfigManager(pyquoks.data.ConfigManager):
 
 
 class DataManager(pyquoks.data.DataManager):
-
     bells: list[schedule_parser.models.BellsVariant]
     schedule: list[schedule_parser.models.GroupSchedule]
 
