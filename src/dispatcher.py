@@ -18,6 +18,7 @@ class AiogramDispatcher(aiogram.Dispatcher):
 
     def __init__(
             self,
+            environment_provider: data.EnvironmentProvider,
             strings_provider: data.StringsProvider,
             keyboards_provider: data.KeyboardsProvider,
             config_manager: data.ConfigManager,
@@ -25,6 +26,7 @@ class AiogramDispatcher(aiogram.Dispatcher):
             database_manager: data.DatabaseManager,
             logger_service: data.LoggerService,
     ) -> None:
+        self._environment = environment_provider
         self._strings = strings_provider
         self._keyboards = keyboards_provider
         self._config = config_manager
@@ -32,7 +34,7 @@ class AiogramDispatcher(aiogram.Dispatcher):
         self._database = database_manager
         self._logger = logger_service
         self._bot = aiogram.Bot(
-            token=self._config.settings.bot_token,
+            token=self._environment.TELEGRAM_BOT_TOKEN,
             default=aiogram.client.default.DefaultBotProperties(
                 parse_mode=aiogram.enums.ParseMode.HTML,
             ),

@@ -1,12 +1,12 @@
 aiofiles==25.1.0
 aiogram==3.24.0
 aiohappyeyeballs==2.6.1
-aiohttp==3.13.2
+aiohttp==3.13.3
 aiosignal==1.4.0
 annotated-types==0.7.0
 attrs==25.4.0
 blinker==1.9.0
-certifi==2025.11.12
+certifi==2026.1.4
 charset-normalizer==3.4.4
 click==8.3.1
 colorama==0.4.6
@@ -25,9 +25,9 @@ propcache==0.4.1
 psutil==7.2.1
 pydantic==2.12.5
 pydantic_core==2.41.5
-pyquoks==2.3.1
+pyquoks==2.3.2
 requests==2.32.5
-schedule_parser @ git+https://github.com/elkollege/ScheduleParser.git@809a5e9159dc6db67aed745b379bdb3f8d88567e
+schedule_parser @ git+https://github.com/elkollege/ScheduleParser.git@9c79bb77de6a3970dff167115244d351db236b7a
 typing-inspection==0.4.2
 typing_extensions==4.15.0
 urllib3==2.6.2

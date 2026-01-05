@@ -11,6 +11,7 @@
     - [Прочие ссылки](#прочие-ссылки)
 - [Сборка и запуск](#сборка-и-запуск)
     - [Необходимые компоненты](#необходимые-компоненты)
+    - [.env](#env)
     - [config.ini](#configini)
         - [Раздел `Settings`](#раздел-settings)
     - [Docker](#docker)
@@ -38,6 +39,13 @@
 - [Git](https://git-scm.com/downloads)
 - [Python 3.14](https://www.python.org/downloads)
 
+### .env
+
+| Переменная           | Описание              |
+|:---------------------|:----------------------|
+| `TELEGRAM_BOT_TOKEN` | Токен бота в Telegram |
+
+
 ### config.ini
 
 #### Раздел `Settings`
@@ -45,7 +53,6 @@
 | Настройка            |  Тип   | Описание                                       |
 |:---------------------|:------:|:-----------------------------------------------|
 | `admins_list`        | `list` | Список ID аккаунтов администраторов в Telegram |
-| `bot_token`          | `str`  | Токен бота в Telegram                          |
 | `file_logging`       | `bool` | Использовать логирование в файлы `.log`        |
 | `skip_updates`       | `bool` | Пропускать ожидающие события при запуске бота  |
 | `workbook_extension` | `str`  | Расширение файлов с расписанием и заменами     |
@@ -56,12 +63,12 @@
 
 ##### Создайте образ
 
-```bash
+```shell
 docker build -t elkollege_schedule_bot .
 ```
 
 ##### Запустите контейнер
 
-```bash
-docker run -it -d --name ElkollegeScheduleBot elkollege_schedule_bot
+```shell
+docker run -d --env-file .env --name ElkollegeScheduleBot elkollege_schedule_bot
 ```
