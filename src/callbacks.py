@@ -100,9 +100,6 @@ class CallbacksRouter(aiogram.Router):
                         message_id=call.message.message_id,
                         text=self._strings.menu.schedule(
                             date=current_date,
-                            bells=self._data.get_bells_variant_by_weekday(
-                                weekday=schedule_parser.models.Weekday(current_date.weekday())
-                            ),
                             schedule=schedule_parser.utils.get_schedule_with_substitutions(
                                 schedule=self._data.schedule,
                                 substitutions=self._data.get_substitutions(
