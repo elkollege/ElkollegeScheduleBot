@@ -1,17 +1,5 @@
-import enum
-
 import pydantic
 
-
-# region Enums
-
-class BellsType(enum.Enum):
-    MONDAY = 0
-    WEDNESDAY = 1
-    OTHER = 2
-
-
-# endregion
 
 # region models
 

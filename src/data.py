@@ -175,11 +175,10 @@ class StringsProvider(pyquoks.data.StringsProvider):
         def schedule(
                 cls,
                 date: datetime.datetime,
-                bells: schedule_parser.models.BellsVariant,
                 schedule: list[schedule_parser.models.Period],
         ) -> str:
             if schedule:
-                readable_schedule = str.lstrip("\n".join(bells.format_period(period) for period in schedule))
+                readable_schedule = "\n".join(period.readable for period in schedule)
             else:
                 readable_schedule = "*Пары отсутствуют*"
 
@@ -696,23 +695,7 @@ class ConfigManager(pyquoks.data.ConfigManager):
 
 
 class DataManager(pyquoks.data.DataManager):
-    bells: list[schedule_parser.models.BellsVariant]
     schedule: list[schedule_parser.models.GroupSchedule]
-
-    def get_bells_variant_by_weekday(
-            self,
-            weekday: schedule_parser.models.Weekday
-    ) -> schedule_parser.models.BellsVariant:
-        match weekday:
-            case schedule_parser.models.Weekday.MONDAY:
-                return self.bells[models.BellsType.MONDAY.value]
-            case schedule_parser.models.Weekday.WEDNESDAY:
-                return self.bells[models.BellsType.WEDNESDAY.value]
-            case schedule_parser.models.Weekday.TUESDAY | schedule_parser.models.Weekday.THURSDAY | \
-                 schedule_parser.models.Weekday.FRIDAY | schedule_parser.models.Weekday.SATURDAY:
-                return self.bells[models.BellsType.OTHER.value]
-            case schedule_parser.models.Weekday.SUNDAY:
-                raise ValueError
 
     def get_substitutions(self, date: datetime.datetime) -> list[schedule_parser.models.Substitution]:
         try:
