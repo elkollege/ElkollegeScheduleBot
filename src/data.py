@@ -347,6 +347,18 @@ class StringsProvider(pyquoks.data.StringsProvider):
         def is_notifiable(cls) -> str:
             return "Уведомления"
 
+        @classmethod
+        def _get_setting_string(cls, setting: str) -> str:
+            string_callable = getattr(cls, setting, None)
+
+            if string_callable is None:
+                raise AttributeError(
+                    name=setting,
+                    obj=cls,
+                )
+            else:
+                return string_callable()
+
     alert: AlertStrings
     button: ButtonStrings
     menu: MenuStrings
@@ -393,7 +405,12 @@ class ButtonsProvider:
 
     def settings_switch(self, name: str, value: bool) -> aiogram.types.InlineKeyboardButton:
         return aiogram.types.InlineKeyboardButton(
-            text=self._strings.button.settings_switch(getattr(self._strings.settings, name)(), value),
+            text=self._strings.button.settings_switch(
+                name=self._strings.settings._get_setting_string(
+                    setting=name,
+                ),
+                value=value,
+            ),
             callback_data=f"settings_switch {name}",
         )
 
@@ -660,9 +677,9 @@ class KeyboardsProvider:
         markup_builder.row(
             *[
                 self._buttons.settings_switch(
-                    name=settings,
-                    value=getattr(user, settings)
-                ) for settings in user._switchable_values()
+                    name=setting,
+                    value=getattr(user, setting)
+                ) for setting in user._switchable_values()
             ],
             width=constants.SETTINGS_PER_ROW,
         )
@@ -929,6 +946,20 @@ class DatabaseManager(pyquoks.data.DatabaseManager):
             )
 
             self.commit()
+
+        def _edit_setting(self, user_id: int, setting: str, value: bool) -> None:
+            edit_callable = getattr(self, f"edit_{setting}", None)
+
+            if edit_callable is None:
+                raise AttributeError(
+                    name=setting,
+                    obj=self,
+                )
+            else:
+                return edit_callable(
+                    user_id,
+                    value,
+                )
 
     users: UsersDatabase
 

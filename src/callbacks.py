@@ -179,9 +179,10 @@ class CallbacksRouter(aiogram.Router):
                         ),
                     )
                 case ["settings_switch", current_setting]:
-                    getattr(self._database.users, f"edit_{current_setting}")(
-                        current_user.id,
-                        not (getattr(current_user, current_setting)),
+                    self._database.users._edit_setting(
+                        user_id=current_user.id,
+                        setting=current_setting,
+                        value=not getattr(current_user, current_setting),
                     )
 
                     current_user = self._database.users.get_user(
