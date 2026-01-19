@@ -168,7 +168,36 @@ class CallbacksRouter(aiogram.Router):
                         show_alert=True,
                     )
                 case ["settings"]:
-                    ...  # TODO
+                    await self._bot.edit_message_text(
+                        chat_id=call.message.chat.id,
+                        message_id=call.message.message_id,
+                        text=self._strings.menu.settings(
+                            user=current_user,
+                        ),
+                        reply_markup=self._keyboards.settings(
+                            user=current_user,
+                        ),
+                    )
+                case ["settings_switch", current_setting]:
+                    getattr(self._database.users, f"edit_{current_setting}")(
+                        current_user.id,
+                        not (getattr(current_user, current_setting)),
+                    )
+
+                    current_user = self._database.users.get_user(
+                        user_id=current_user.id,
+                    )
+
+                    await self._bot.edit_message_text(
+                        chat_id=call.message.chat.id,
+                        message_id=call.message.message_id,
+                        text=self._strings.menu.settings(
+                            user=current_user,
+                        ),
+                        reply_markup=self._keyboards.settings(
+                            user=current_user,
+                        ),
+                    )
                 case ["admin"] if is_admin:
                     await self._bot.edit_message_text(
                         chat_id=call.message.chat.id,

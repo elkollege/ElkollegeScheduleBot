@@ -90,6 +90,10 @@ class StringsProvider(pyquoks.data.StringsProvider):
         def settings(cls) -> str:
             return "Настройки"
 
+        @classmethod
+        def settings_switch(cls, name: str, value: bool) -> str:
+            return f"{name} - {"✅" if value else "❌"}"
+
         # endregion
 
         # region /admin
@@ -128,7 +132,7 @@ class StringsProvider(pyquoks.data.StringsProvider):
 
         # endregion
 
-        # region page
+        # region page_*
 
         @classmethod
         def page_previous(cls) -> str:
@@ -194,6 +198,17 @@ class StringsProvider(pyquoks.data.StringsProvider):
                 
                 Выберите свою учебную 
                 группу из списка ниже:
+                """,
+            )
+
+        @classmethod
+        def settings(cls, user: models.User) -> str:
+            return textwrap.dedent(
+                f"""\
+                <b>Настройки</b>
+                
+                UserID: <b>{user.id}</b>
+                {f"Группа: <b>{user.group}</b>" if user.group else ""}
                 """,
             )
 
@@ -315,9 +330,15 @@ class StringsProvider(pyquoks.data.StringsProvider):
 
         # endregion
 
+    class SettingsStrings(pyquoks.data.StringsProvider.Strings):
+        @classmethod
+        def is_notifiable(cls) -> str:
+            return "Уведомления"
+
     alert: AlertStrings
     button: ButtonStrings
     menu: MenuStrings
+    settings: SettingsStrings
 
 
 class ButtonsProvider:
@@ -328,7 +349,7 @@ class ButtonsProvider:
 
     def view_schedules(self) -> aiogram.types.InlineKeyboardButton:
         return aiogram.types.InlineKeyboardButton(
-            text=self._strings.button.schedule(),
+            text=self._strings.button.view_schedules(),
             callback_data="view_schedules",
         )
 
@@ -356,6 +377,12 @@ class ButtonsProvider:
         return aiogram.types.InlineKeyboardButton(
             text=self._strings.button.settings(),
             callback_data="settings",
+        )
+
+    def settings_switch(self, name: str, value: bool) -> aiogram.types.InlineKeyboardButton:
+        return aiogram.types.InlineKeyboardButton(
+            text=self._strings.button.settings_switch(getattr(self._strings.settings, name)(), value),
+            callback_data=f"settings_switch {name}",
         )
 
     # endregion
@@ -557,9 +584,9 @@ class KeyboardsProvider:
             *[
                 self._buttons.schedule(
                     current_date + datetime.timedelta(
-                        days=i,
+                        days=days_delta,
                     ),
-                ) for i in range(constants.SCHEDULE_DAYS)
+                ) for days_delta in range(constants.SCHEDULE_DAYS)
             ],
         )
         markup_builder.row(self._buttons.back_to_start())
@@ -598,6 +625,21 @@ class KeyboardsProvider:
                 items_count=len(groups),
                 items_per_page=constants.GROUPS_PER_PAGE,
             ),
+        )
+        markup_builder.row(self._buttons.back_to_start())
+
+        return markup_builder.as_markup()
+
+    def settings(self, user: models.User) -> aiogram.types.InlineKeyboardMarkup:
+        markup_builder = aiogram.utils.keyboard.InlineKeyboardBuilder()
+        markup_builder.row(
+            *[
+                self._buttons.settings_switch(
+                    name=settings,
+                    value=getattr(user, settings)
+                ) for settings in user._switchable_values()
+            ],
+            width=constants.SETTINGS_PER_ROW,
         )
         markup_builder.row(self._buttons.back_to_start())
 
@@ -647,9 +689,9 @@ class KeyboardsProvider:
             *[
                 self._buttons.manage_substitutions(
                     current_date + datetime.timedelta(
-                        days=i,
+                        days=days_delta,
                     ),
-                ) for i in range(constants.SUBSTITUTIONS_DAYS)
+                ) for days_delta in range(constants.SCHEDULE_DAYS)
             ],
         )
         markup_builder.row(self._buttons.back_to_admin())
@@ -750,7 +792,8 @@ class DatabaseManager(pyquoks.data.DatabaseManager):
             f"""\
             CREATE TABLE IF NOT EXISTS {_NAME} (
             id INTEGER PRIMARY KEY NOT NULL,
-            `group` TEXT
+            `group` TEXT NOT NULL,
+            is_notifiable BOOLEAN NOT NULL
             )
             """,
         )
@@ -763,14 +806,16 @@ class DatabaseManager(pyquoks.data.DatabaseManager):
                     f"""\
                     INSERT OR IGNORE INTO {self._NAME} (
                     id,
-                    `group`
+                    `group`,
+                    notifiable
                     )
-                    VALUES (?, ?)
+                    VALUES (?, ?, ?)
                     """,
                 ),
                 (
                     user.id,
                     user.group,
+                    user.is_notifiable,
                 ),
             )
 
@@ -807,6 +852,23 @@ class DatabaseManager(pyquoks.data.DatabaseManager):
                 ),
                 (
                     group,
+                    user_id,
+                ),
+            )
+
+            self.commit()
+
+        def edit_is_notifiable(self, user_id: int, is_notifiable: bool) -> None:
+            cursor = self.cursor()
+
+            cursor.execute(
+                textwrap.dedent(
+                    f"""\
+                    UPDATE {self._NAME} SET is_notifiable = ? WHERE id = ?
+                    """,
+                ),
+                (
+                    is_notifiable,
                     user_id,
                 ),
             )

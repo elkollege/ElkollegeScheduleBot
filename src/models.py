@@ -5,12 +5,20 @@ import pydantic
 
 class User(pydantic.BaseModel):
     id: int
-    group: str | None
+    group: str
+    is_notifiable: bool
 
     @staticmethod
     def _default_values() -> dict:
         return {
-            "group": None,
+            "group": "",
+            "is_notifiable": True,
+        }
+
+    @staticmethod
+    def _switchable_values() -> set:
+        return {
+            "is_notifiable",
         }
 
 # endregion
