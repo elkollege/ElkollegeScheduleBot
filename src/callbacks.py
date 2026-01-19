@@ -85,12 +85,6 @@ class CallbacksRouter(aiogram.Router):
                             text=self._strings.alert.schedule_unavailable(),
                             show_alert=True,
                         )
-                    elif not current_user.group:
-                        await self._bot.answer_callback_query(
-                            callback_query_id=call.id,
-                            text=self._strings.alert.group_not_selected(),
-                            show_alert=True,
-                        )
                     else:
                         await self._bot.edit_message_text(
                             chat_id=call.message.chat.id,
@@ -111,6 +105,12 @@ class CallbacksRouter(aiogram.Router):
                         await self._bot.answer_callback_query(
                             callback_query_id=call.id,
                             text=self._strings.alert.group_not_selected(),
+                            show_alert=True,
+                        )
+                    elif not current_user.group in [self._data.schedule]:
+                        await self._bot.answer_callback_query(
+                            callback_query_id=call.id,
+                            text=self._strings.alert.group_missing_in_schedule(),
                             show_alert=True,
                         )
                     else:
