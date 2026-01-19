@@ -80,9 +80,9 @@ class MessagesRouter(aiogram.Router):
                         ),
                         reply_markup=self._keyboards.upload_schedule_ended(),
                     )
-                except Exception as e:
-                    if type(e) not in constants.IGNORED_EXCEPTIONS:
-                        self._logger.log_error(e)
+                except Exception as exception:
+                    if type(exception) not in constants.IGNORED_EXCEPTIONS:
+                        self._logger.log_error(exception)
 
                     await self._bot.send_message(
                         chat_id=message.chat.id,
@@ -146,9 +146,9 @@ class MessagesRouter(aiogram.Router):
                             date=current_date,
                         ),
                     )
-                except Exception as e:
-                    if type(e) not in constants.IGNORED_EXCEPTIONS:
-                        self._logger.log_error(e)
+                except Exception as exception:
+                    if type(exception) not in constants.IGNORED_EXCEPTIONS:
+                        self._logger.log_error(exception)
 
                     await self._bot.send_message(
                         chat_id=message.chat.id,

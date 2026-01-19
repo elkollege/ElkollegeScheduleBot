@@ -41,8 +41,8 @@ class StringsProvider(pyquoks.data.StringsProvider):
             return f"Выбрана группа \"{group}\"!"
 
         @classmethod
-        def settings_unavailable(cls) -> str:
-            return f"Настройки временно недоступны!"
+        def group_not_selected(cls) -> str:
+            return "Выберите группу для просмотра расписания!"
 
         # endregion
 
@@ -176,6 +176,7 @@ class StringsProvider(pyquoks.data.StringsProvider):
                 cls,
                 date: datetime.datetime,
                 schedule: list[schedule_parser.models.Period],
+                has_substitutions: bool,
         ) -> str:
             if schedule:
                 readable_schedule = "\n".join(period.readable for period in schedule)
@@ -183,7 +184,7 @@ class StringsProvider(pyquoks.data.StringsProvider):
                 readable_schedule = "*Пары отсутствуют*"
 
             # different string format is used to avoid unnecessary leading whitespaces
-            return f"<b>Расписание на {utils.get_readable_date(date)}</b>\n\n{readable_schedule}"
+            return f"<b>Расписание на {utils.get_readable_date(date)}</b>{"\n*Замены не загружены*" if not has_substitutions else ""}\n\n{readable_schedule}"
 
         @classmethod
         def view_groups(cls) -> str:
@@ -553,8 +554,13 @@ class KeyboardsProvider:
 
         markup_builder = aiogram.utils.keyboard.InlineKeyboardBuilder()
         markup_builder.row(
-            self._buttons.schedule(current_date),
-            self._buttons.schedule(current_date + datetime.timedelta(days=1)),
+            *[
+                self._buttons.schedule(
+                    current_date + datetime.timedelta(
+                        days=i,
+                    ),
+                ) for i in range(constants.SCHEDULE_DAYS)
+            ],
         )
         markup_builder.row(self._buttons.back_to_start())
 
@@ -638,9 +644,13 @@ class KeyboardsProvider:
 
         markup_builder = aiogram.utils.keyboard.InlineKeyboardBuilder()
         markup_builder.row(
-            self._buttons.manage_substitutions(current_date),
-            self._buttons.manage_substitutions(current_date + datetime.timedelta(days=1)),
-            self._buttons.manage_substitutions(current_date + datetime.timedelta(days=2)),
+            *[
+                self._buttons.manage_substitutions(
+                    current_date + datetime.timedelta(
+                        days=i,
+                    ),
+                ) for i in range(constants.SUBSTITUTIONS_DAYS)
+            ],
         )
         markup_builder.row(self._buttons.back_to_admin())
 

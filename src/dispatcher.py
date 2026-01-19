@@ -93,8 +93,8 @@ class AiogramDispatcher(aiogram.Dispatcher):
             )
 
             await self.start_polling(self._bot)
-        except Exception as e:
-            self._logger.log_error(e)
+        except Exception as exception:
+            self._logger.log_error(exception)
 
     # endregion
 
