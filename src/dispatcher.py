@@ -77,6 +77,7 @@ class AiogramDispatcher(aiogram.Dispatcher):
                 keyboards_provider=self._keyboards,
                 config_manager=self._config,
                 data_manager=self._data,
+                database_manager=self._database,
                 logger_service=self._logger,
                 bot=self._bot,
             )

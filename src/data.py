@@ -330,6 +330,18 @@ class StringsProvider(pyquoks.data.StringsProvider):
 
         # endregion
 
+        # region notification_*
+
+        @classmethod
+        def notification_schedule_uploaded(cls) -> str:
+            return "Загружено новое расписание!"
+
+        @classmethod
+        def notification_substitutions_uploaded(cls, date: datetime.datetime) -> str:
+            return f"Загружены замены на {utils.get_readable_date(date)}!"
+
+        # endregion
+
     class SettingsStrings(pyquoks.data.StringsProvider.Strings):
         @classmethod
         def is_notifiable(cls) -> str:
@@ -519,6 +531,19 @@ class ButtonsProvider:
         return aiogram.types.InlineKeyboardButton(
             text=self._strings.button.page_next(),
             callback_data="answer_callback" if is_answer_callback else callback,
+        )
+
+    # endregion
+
+    # region notifications_*
+
+    def view_schedule(
+            self,
+            date: datetime.datetime,
+    ) -> aiogram.types.InlineKeyboardButton:
+        return aiogram.types.InlineKeyboardButton(
+            text=self._strings.button.view_schedules(),
+            callback_data=f"schedule {utils.get_callback_date(date)}",
         )
 
     # endregion
@@ -722,6 +747,22 @@ class KeyboardsProvider:
 
     # endregion
 
+    # region notification_*
+
+    def notification_schedule_uploaded(self) -> aiogram.types.InlineKeyboardMarkup:
+        markup_builder = aiogram.utils.keyboard.InlineKeyboardBuilder()
+        markup_builder.row(self._buttons.view_schedules())
+
+        return markup_builder.as_markup()
+
+    def notification_substitutions_uploaded(self, date: datetime.datetime) -> aiogram.types.InlineKeyboardMarkup:
+        markup_builder = aiogram.utils.keyboard.InlineKeyboardBuilder()
+        markup_builder.row(self._buttons.schedule(date))
+
+        return markup_builder.as_markup()
+
+    # endregion
+
 
 # endregion
 
@@ -807,7 +848,7 @@ class DatabaseManager(pyquoks.data.DatabaseManager):
                     INSERT OR IGNORE INTO {self._NAME} (
                     id,
                     `group`,
-                    notifiable
+                    is_notifiable
                     )
                     VALUES (?, ?, ?)
                     """,
@@ -840,6 +881,20 @@ class DatabaseManager(pyquoks.data.DatabaseManager):
                 return models.User(**dict(result))
             else:
                 return None
+
+        def get_users(self) -> list[models.User]:
+            cursor = self.cursor()
+
+            cursor.execute(
+                textwrap.dedent(
+                    f"""\
+                    SELECT * FROM {self._NAME}
+                    """,
+                ),
+            )
+            results = cursor.fetchall()
+
+            return [models.User(**dict(result)) for result in results]
 
         def edit_group(self, user_id: int, group: str) -> None:
             cursor = self.cursor()
