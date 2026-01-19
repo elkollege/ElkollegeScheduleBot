@@ -44,6 +44,10 @@ class StringsProvider(pyquoks.data.StringsProvider):
         def group_not_selected(cls) -> str:
             return "Выберите группу для просмотра расписания!"
 
+        @classmethod
+        def group_missing_in_schedule(cls) -> str:
+            return "Расписание для выбранной группы отсутствует!"
+
         # endregion
 
         # region /admin
