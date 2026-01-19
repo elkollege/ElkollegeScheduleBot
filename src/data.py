@@ -41,8 +41,8 @@ class StringsProvider(pyquoks.data.StringsProvider):
             return f"Выбрана группа \"{group}\"!"
 
         @classmethod
-        def settings_unavailable(cls) -> str:
-            return f"Настройки временно недоступны!"
+        def group_not_selected(cls) -> str:
+            return "Выберите группу для просмотра расписания!"
 
         # endregion
 
@@ -90,6 +90,10 @@ class StringsProvider(pyquoks.data.StringsProvider):
         def settings(cls) -> str:
             return "Настройки"
 
+        @classmethod
+        def settings_switch(cls, name: str, value: bool) -> str:
+            return f"{name} - {"✅" if value else "❌"}"
+
         # endregion
 
         # region /admin
@@ -128,7 +132,7 @@ class StringsProvider(pyquoks.data.StringsProvider):
 
         # endregion
 
-        # region page
+        # region page_*
 
         @classmethod
         def page_previous(cls) -> str:
@@ -176,6 +180,7 @@ class StringsProvider(pyquoks.data.StringsProvider):
                 cls,
                 date: datetime.datetime,
                 schedule: list[schedule_parser.models.Period],
+                has_substitutions: bool,
         ) -> str:
             if schedule:
                 readable_schedule = "\n".join(period.readable for period in schedule)
@@ -183,7 +188,7 @@ class StringsProvider(pyquoks.data.StringsProvider):
                 readable_schedule = "*Пары отсутствуют*"
 
             # different string format is used to avoid unnecessary leading whitespaces
-            return f"<b>Расписание на {utils.get_readable_date(date)}</b>\n\n{readable_schedule}"
+            return f"<b>Расписание на {utils.get_readable_date(date)}</b>{"\n*Замены не загружены*" if not has_substitutions else ""}\n\n{readable_schedule}"
 
         @classmethod
         def view_groups(cls) -> str:
@@ -193,6 +198,17 @@ class StringsProvider(pyquoks.data.StringsProvider):
                 
                 Выберите свою учебную 
                 группу из списка ниже:
+                """,
+            )
+
+        @classmethod
+        def settings(cls, user: models.User) -> str:
+            return textwrap.dedent(
+                f"""\
+                <b>Настройки</b>
+                
+                UserID: <b>{user.id}</b>
+                {f"Группа: <b>{user.group}</b>" if user.group else ""}
                 """,
             )
 
@@ -314,9 +330,39 @@ class StringsProvider(pyquoks.data.StringsProvider):
 
         # endregion
 
+        # region notification_*
+
+        @classmethod
+        def notification_schedule_uploaded(cls) -> str:
+            return "Загружено новое расписание!"
+
+        @classmethod
+        def notification_substitutions_uploaded(cls, date: datetime.datetime) -> str:
+            return f"Загружены замены на {utils.get_readable_date(date)}!"
+
+        # endregion
+
+    class SettingsStrings(pyquoks.data.StringsProvider.Strings):
+        @classmethod
+        def is_notifiable(cls) -> str:
+            return "Уведомления"
+
+        @classmethod
+        def _get_setting_string(cls, setting: str) -> str:
+            string_callable = getattr(cls, setting, None)
+
+            if string_callable is None:
+                raise AttributeError(
+                    name=setting,
+                    obj=cls,
+                )
+            else:
+                return string_callable()
+
     alert: AlertStrings
     button: ButtonStrings
     menu: MenuStrings
+    settings: SettingsStrings
 
 
 class ButtonsProvider:
@@ -327,7 +373,7 @@ class ButtonsProvider:
 
     def view_schedules(self) -> aiogram.types.InlineKeyboardButton:
         return aiogram.types.InlineKeyboardButton(
-            text=self._strings.button.schedule(),
+            text=self._strings.button.view_schedules(),
             callback_data="view_schedules",
         )
 
@@ -355,6 +401,17 @@ class ButtonsProvider:
         return aiogram.types.InlineKeyboardButton(
             text=self._strings.button.settings(),
             callback_data="settings",
+        )
+
+    def settings_switch(self, name: str, value: bool) -> aiogram.types.InlineKeyboardButton:
+        return aiogram.types.InlineKeyboardButton(
+            text=self._strings.button.settings_switch(
+                name=self._strings.settings._get_setting_string(
+                    setting=name,
+                ),
+                value=value,
+            ),
+            callback_data=f"settings_switch {name}",
         )
 
     # endregion
@@ -495,6 +552,19 @@ class ButtonsProvider:
 
     # endregion
 
+    # region notifications_*
+
+    def view_schedule(
+            self,
+            date: datetime.datetime,
+    ) -> aiogram.types.InlineKeyboardButton:
+        return aiogram.types.InlineKeyboardButton(
+            text=self._strings.button.view_schedules(),
+            callback_data=f"schedule {utils.get_callback_date(date)}",
+        )
+
+    # endregion
+
 
 class KeyboardsProvider:
     def __init__(self, buttons_provider: ButtonsProvider) -> None:
@@ -553,8 +623,13 @@ class KeyboardsProvider:
 
         markup_builder = aiogram.utils.keyboard.InlineKeyboardBuilder()
         markup_builder.row(
-            self._buttons.schedule(current_date),
-            self._buttons.schedule(current_date + datetime.timedelta(days=1)),
+            *[
+                self._buttons.schedule(
+                    current_date + datetime.timedelta(
+                        days=days_delta,
+                    ),
+                ) for days_delta in range(constants.SCHEDULE_DAYS)
+            ],
         )
         markup_builder.row(self._buttons.back_to_start())
 
@@ -592,6 +667,21 @@ class KeyboardsProvider:
                 items_count=len(groups),
                 items_per_page=constants.GROUPS_PER_PAGE,
             ),
+        )
+        markup_builder.row(self._buttons.back_to_start())
+
+        return markup_builder.as_markup()
+
+    def settings(self, user: models.User) -> aiogram.types.InlineKeyboardMarkup:
+        markup_builder = aiogram.utils.keyboard.InlineKeyboardBuilder()
+        markup_builder.row(
+            *[
+                self._buttons.settings_switch(
+                    name=setting,
+                    value=getattr(user, setting)
+                ) for setting in user._switchable_values()
+            ],
+            width=constants.SETTINGS_PER_ROW,
         )
         markup_builder.row(self._buttons.back_to_start())
 
@@ -638,9 +728,13 @@ class KeyboardsProvider:
 
         markup_builder = aiogram.utils.keyboard.InlineKeyboardBuilder()
         markup_builder.row(
-            self._buttons.manage_substitutions(current_date),
-            self._buttons.manage_substitutions(current_date + datetime.timedelta(days=1)),
-            self._buttons.manage_substitutions(current_date + datetime.timedelta(days=2)),
+            *[
+                self._buttons.manage_substitutions(
+                    current_date + datetime.timedelta(
+                        days=days_delta,
+                    ),
+                ) for days_delta in range(constants.SCHEDULE_DAYS)
+            ],
         )
         markup_builder.row(self._buttons.back_to_admin())
 
@@ -665,6 +759,22 @@ class KeyboardsProvider:
     def upload_substitutions_ended(self, date: datetime.datetime) -> aiogram.types.InlineKeyboardMarkup:
         markup_builder = aiogram.utils.keyboard.InlineKeyboardBuilder()
         markup_builder.row(self._buttons.back_to_manage_substitutions(date))
+
+        return markup_builder.as_markup()
+
+    # endregion
+
+    # region notification_*
+
+    def notification_schedule_uploaded(self) -> aiogram.types.InlineKeyboardMarkup:
+        markup_builder = aiogram.utils.keyboard.InlineKeyboardBuilder()
+        markup_builder.row(self._buttons.view_schedules())
+
+        return markup_builder.as_markup()
+
+    def notification_substitutions_uploaded(self, date: datetime.datetime) -> aiogram.types.InlineKeyboardMarkup:
+        markup_builder = aiogram.utils.keyboard.InlineKeyboardBuilder()
+        markup_builder.row(self._buttons.schedule(date))
 
         return markup_builder.as_markup()
 
@@ -740,7 +850,8 @@ class DatabaseManager(pyquoks.data.DatabaseManager):
             f"""\
             CREATE TABLE IF NOT EXISTS {_NAME} (
             id INTEGER PRIMARY KEY NOT NULL,
-            `group` TEXT
+            `group` TEXT NOT NULL,
+            is_notifiable BOOLEAN NOT NULL
             )
             """,
         )
@@ -753,14 +864,16 @@ class DatabaseManager(pyquoks.data.DatabaseManager):
                     f"""\
                     INSERT OR IGNORE INTO {self._NAME} (
                     id,
-                    `group`
+                    `group`,
+                    is_notifiable
                     )
-                    VALUES (?, ?)
+                    VALUES (?, ?, ?)
                     """,
                 ),
                 (
                     user.id,
                     user.group,
+                    user.is_notifiable,
                 ),
             )
 
@@ -786,6 +899,20 @@ class DatabaseManager(pyquoks.data.DatabaseManager):
             else:
                 return None
 
+        def get_users(self) -> list[models.User]:
+            cursor = self.cursor()
+
+            cursor.execute(
+                textwrap.dedent(
+                    f"""\
+                    SELECT * FROM {self._NAME}
+                    """,
+                ),
+            )
+            results = cursor.fetchall()
+
+            return [models.User(**dict(result)) for result in results]
+
         def edit_group(self, user_id: int, group: str) -> None:
             cursor = self.cursor()
 
@@ -802,6 +929,37 @@ class DatabaseManager(pyquoks.data.DatabaseManager):
             )
 
             self.commit()
+
+        def edit_is_notifiable(self, user_id: int, is_notifiable: bool) -> None:
+            cursor = self.cursor()
+
+            cursor.execute(
+                textwrap.dedent(
+                    f"""\
+                    UPDATE {self._NAME} SET is_notifiable = ? WHERE id = ?
+                    """,
+                ),
+                (
+                    is_notifiable,
+                    user_id,
+                ),
+            )
+
+            self.commit()
+
+        def _edit_setting(self, user_id: int, setting: str, value: bool) -> None:
+            edit_callable = getattr(self, f"edit_{setting}", None)
+
+            if edit_callable is None:
+                raise AttributeError(
+                    name=setting,
+                    obj=self,
+                )
+            else:
+                return edit_callable(
+                    user_id,
+                    value,
+                )
 
     users: UsersDatabase
 

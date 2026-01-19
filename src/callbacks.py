@@ -79,42 +79,70 @@ class CallbacksRouter(aiogram.Router):
                         reply_markup=self._keyboards.start(),
                     )
                 case ["view_schedules"]:
-                    if self._data.schedule:
+                    if not self._data.schedule:
+                        await self._bot.answer_callback_query(
+                            callback_query_id=call.id,
+                            text=self._strings.alert.schedule_unavailable(),
+                            show_alert=True,
+                        )
+                    elif not current_user.group:
+                        await self._bot.answer_callback_query(
+                            callback_query_id=call.id,
+                            text=self._strings.alert.group_not_selected(),
+                            show_alert=True,
+                        )
+                    else:
                         await self._bot.edit_message_text(
                             chat_id=call.message.chat.id,
                             message_id=call.message.message_id,
                             text=self._strings.menu.view_schedules(),
                             reply_markup=self._keyboards.view_schedules(),
                         )
-                    else:
+                case ["schedule", current_date]:
+                    current_date = utils.get_date_from_callback(current_date)
+
+                    if not self._data.schedule:
                         await self._bot.answer_callback_query(
                             callback_query_id=call.id,
                             text=self._strings.alert.schedule_unavailable(),
                             show_alert=True,
                         )
-                case ["schedule", current_date]:
-                    current_date = utils.get_date_from_callback(current_date)
-
-                    await self._bot.edit_message_text(
-                        chat_id=call.message.chat.id,
-                        message_id=call.message.message_id,
-                        text=self._strings.menu.schedule(
+                    elif not current_user.group:
+                        await self._bot.answer_callback_query(
+                            callback_query_id=call.id,
+                            text=self._strings.alert.group_not_selected(),
+                            show_alert=True,
+                        )
+                    else:
+                        current_substitutions = self._data.get_substitutions(
                             date=current_date,
-                            schedule=schedule_parser.utils.get_schedule_with_substitutions(
-                                schedule=self._data.schedule,
-                                substitutions=self._data.get_substitutions(
+                        )
+
+                        await self._bot.edit_message_text(
+                            chat_id=call.message.chat.id,
+                            message_id=call.message.message_id,
+                            text=self._strings.menu.schedule(
+                                date=current_date,
+                                schedule=schedule_parser.utils.get_schedule_with_substitutions(
+                                    schedule=self._data.schedule,
+                                    substitutions=current_substitutions,
+                                    group=current_user.group,
                                     date=current_date,
                                 ),
-                                group=current_user.group,
-                                date=current_date,
+                                has_substitutions=bool(current_substitutions),
                             ),
-                        ),
-                        reply_markup=self._keyboards.schedule(),
-                    )
+                            reply_markup=self._keyboards.schedule(),
+                        )
                 case ["view_groups", current_page]:
                     current_page = int(current_page)
 
-                    if self._data.schedule:
+                    if not self._data.schedule:
+                        await self._bot.answer_callback_query(
+                            callback_query_id=call.id,
+                            text=self._strings.alert.schedule_unavailable(),
+                            show_alert=True,
+                        )
+                    else:
                         await self._bot.edit_message_text(
                             chat_id=call.message.chat.id,
                             message_id=call.message.message_id,
@@ -124,211 +152,222 @@ class CallbacksRouter(aiogram.Router):
                                 page=current_page,
                             ),
                         )
-                    else:
-                        await self._bot.answer_callback_query(
-                            callback_query_id=call.id,
-                            text=self._strings.alert.schedule_unavailable(),
-                            show_alert=True,
-                        )
-                case ["group", *group]:
-                    group = " ".join(group)
+                case ["group", *current_group]:
+                    current_group = " ".join(current_group)
 
                     self._database.users.edit_group(
                         user_id=current_user.id,
-                        group=group,
+                        group=current_group,
                     )
 
                     await self._bot.answer_callback_query(
                         callback_query_id=call.id,
                         text=self._strings.alert.group_selected(
-                            group=group,
+                            group=current_group,
                         ),
                         show_alert=True,
                     )
                 case ["settings"]:
-                    await self._bot.answer_callback_query(
-                        callback_query_id=call.id,
-                        text=self._strings.alert.settings_unavailable(),
-                        show_alert=True,
+                    await self._bot.edit_message_text(
+                        chat_id=call.message.chat.id,
+                        message_id=call.message.message_id,
+                        text=self._strings.menu.settings(
+                            user=current_user,
+                        ),
+                        reply_markup=self._keyboards.settings(
+                            user=current_user,
+                        ),
                     )
+                case ["settings_switch", current_setting]:
+                    self._database.users._edit_setting(
+                        user_id=current_user.id,
+                        setting=current_setting,
+                        value=not getattr(current_user, current_setting),
+                    )
+
+                    current_user = self._database.users.get_user(
+                        user_id=current_user.id,
+                    )
+
+                    await self._bot.edit_message_text(
+                        chat_id=call.message.chat.id,
+                        message_id=call.message.message_id,
+                        text=self._strings.menu.settings(
+                            user=current_user,
+                        ),
+                        reply_markup=self._keyboards.settings(
+                            user=current_user,
+                        ),
+                    )
+                case ["admin"] if is_admin:
+                    await self._bot.edit_message_text(
+                        chat_id=call.message.chat.id,
+                        message_id=call.message.message_id,
+                        text=self._strings.menu.admin(
+                            user=call.from_user,
+                            time_started=pyquoks.utils.get_process_created_datetime(),
+                        ),
+                        reply_markup=self._keyboards.admin(),
+                    )
+                case ["manage_schedule"] if is_admin:
+                    await self._bot.edit_message_text(
+                        chat_id=call.message.chat.id,
+                        message_id=call.message.message_id,
+                        text=self._strings.menu.manage_schedule(
+                            schedule=self._data.schedule,
+                        ),
+                        reply_markup=self._keyboards.manage_schedule(),
+                    )
+                case ["upload_schedule"] if is_admin:
+                    await self._bot.edit_message_text(
+                        chat_id=call.message.chat.id,
+                        message_id=call.message.message_id,
+                        text=self._strings.menu.upload_schedule(
+                            workbook_extension=self._config.settings.workbook_extension,
+                        ),
+                        reply_markup=self._keyboards.upload_schedule(),
+                    )
+
+                    await state.set_state(data.States.upload_schedule)
+                case ["delete_schedule"] if is_admin:
+                    if not self._data.schedule:
+                        await self._bot.answer_callback_query(
+                            callback_query_id=call.id,
+                            text=self._strings.alert.schedule_unavailable(),
+                            show_alert=True,
+                        )
+                    else:
+                        self._data.update(
+                            schedule=[],
+                        )
+
+                        await self._bot.edit_message_text(
+                            chat_id=call.message.chat.id,
+                            message_id=call.message.message_id,
+                            text=self._strings.menu.manage_schedule(
+                                schedule=self._data.schedule,
+                            ),
+                            reply_markup=self._keyboards.manage_schedule(),
+                        )
+
+                        await self._bot.answer_callback_query(
+                            callback_query_id=call.id,
+                            text=self._strings.alert.schedule_deleted(),
+                            show_alert=True,
+                        )
+                case ["view_substitutions"] if is_admin:
+                    await self._bot.edit_message_text(
+                        chat_id=call.message.chat.id,
+                        message_id=call.message.message_id,
+                        text=self._strings.menu.view_substitutions(),
+                        reply_markup=self._keyboards.select_substitutions(),
+                    )
+                case ["manage_substitutions", current_date] if is_admin:
+                    current_date = utils.get_date_from_callback(current_date)
+
+                    await self._bot.edit_message_text(
+                        chat_id=call.message.chat.id,
+                        message_id=call.message.message_id,
+                        text=self._strings.menu.manage_substitutions(
+                            date=current_date,
+                            substitutions=self._data.get_substitutions(
+                                date=current_date,
+                            ),
+                        ),
+                        reply_markup=self._keyboards.manage_substitutions(
+                            date=current_date,
+                        ),
+                    )
+                case ["upload_substitutions", current_date] if is_admin:
+                    current_date = utils.get_date_from_callback(current_date)
+
+                    await self._bot.edit_message_text(
+                        chat_id=call.message.chat.id,
+                        message_id=call.message.message_id,
+                        text=self._strings.menu.upload_substitutions(
+                            date=current_date,
+                            workbook_extension=self._config.settings.workbook_extension,
+                        ),
+                        reply_markup=self._keyboards.upload_substitutions(
+                            date=current_date,
+                        ),
+                    )
+
+                    await state.set_state(data.States.upload_substitutions)
+                    await state.set_data(
+                        data={
+                            "current_date": current_date,
+                        },
+                    )
+                case ["delete_substitutions", current_date] if is_admin:
+                    current_date = utils.get_date_from_callback(current_date)
+
+                    current_substitutions = self._data.get_substitutions(current_date)
+
+                    if not current_substitutions:
+                        await self._bot.answer_callback_query(
+                            callback_query_id=call.id,
+                            text=self._strings.alert.substitutions_unavailable(),
+                            show_alert=True,
+                        )
+                    else:
+                        self._data.update_substitutions(
+                            date=current_date,
+                            substitutions=[],
+                        )
+
+                        current_substitutions = self._data.get_substitutions(current_date)
+
+                        await self._bot.edit_message_text(
+                            chat_id=call.message.chat.id,
+                            message_id=call.message.message_id,
+                            text=self._strings.menu.manage_substitutions(
+                                date=current_date,
+                                substitutions=current_substitutions,
+                            ),
+                            reply_markup=self._keyboards.manage_substitutions(
+                                date=current_date,
+                            ),
+                        )
+
+                        await self._bot.answer_callback_query(
+                            callback_query_id=call.id,
+                            text=self._strings.alert.substitutions_deleted(),
+                            show_alert=True,
+                        )
+                case ["export_logs"] if is_admin:
+                    if not self._config.settings.file_logging:
+                        await self._bot.answer_callback_query(
+                            callback_query_id=call.id,
+                            text=self._strings.alert.export_logs_unavailable(),
+                            show_alert=True,
+                        )
+                    else:
+                        logs_file = self._logger.file
+
+                        await self._bot.send_document(
+                            chat_id=call.message.chat.id,
+                            message_thread_id=utils.get_message_thread_id(call.message),
+                            document=aiogram.types.BufferedInputFile(
+                                file=logs_file.read(),
+                                filename=logs_file.name,
+                            ),
+                        )
+
+                        logs_file.close()
                 case ["answer_callback"]:
                     await self._bot.answer_callback_query(
                         callback_query_id=call.id,
                     )
                 case _:
-                    if is_admin:
-                        match call.data.split():
-                            case ["admin"]:
-                                await self._bot.edit_message_text(
-                                    chat_id=call.message.chat.id,
-                                    message_id=call.message.message_id,
-                                    text=self._strings.menu.admin(
-                                        user=call.from_user,
-                                        time_started=pyquoks.utils.get_process_created_datetime(),
-                                    ),
-                                    reply_markup=self._keyboards.admin(),
-                                )
-                            case ["manage_schedule"]:
-                                await self._bot.edit_message_text(
-                                    chat_id=call.message.chat.id,
-                                    message_id=call.message.message_id,
-                                    text=self._strings.menu.manage_schedule(
-                                        schedule=self._data.schedule,
-                                    ),
-                                    reply_markup=self._keyboards.manage_schedule(),
-                                )
-                            case ["upload_schedule"]:
-                                await self._bot.edit_message_text(
-                                    chat_id=call.message.chat.id,
-                                    message_id=call.message.message_id,
-                                    text=self._strings.menu.upload_schedule(
-                                        workbook_extension=self._config.settings.workbook_extension,
-                                    ),
-                                    reply_markup=self._keyboards.upload_schedule(),
-                                )
-
-                                await state.set_state(data.States.upload_schedule)
-                            case ["delete_schedule"]:
-                                if self._data.schedule:
-                                    self._data.update(
-                                        schedule=[],
-                                    )
-
-                                    await self._bot.edit_message_text(
-                                        chat_id=call.message.chat.id,
-                                        message_id=call.message.message_id,
-                                        text=self._strings.menu.manage_schedule(
-                                            schedule=self._data.schedule,
-                                        ),
-                                        reply_markup=self._keyboards.manage_schedule(),
-                                    )
-
-                                    await self._bot.answer_callback_query(
-                                        callback_query_id=call.id,
-                                        text=self._strings.alert.schedule_deleted(),
-                                        show_alert=True,
-                                    )
-                                else:
-                                    await self._bot.answer_callback_query(
-                                        callback_query_id=call.id,
-                                        text=self._strings.alert.schedule_unavailable(),
-                                        show_alert=True,
-                                    )
-                            case ["view_substitutions"]:
-                                await self._bot.edit_message_text(
-                                    chat_id=call.message.chat.id,
-                                    message_id=call.message.message_id,
-                                    text=self._strings.menu.view_substitutions(),
-                                    reply_markup=self._keyboards.select_substitutions(),
-                                )
-                            case ["manage_substitutions", current_date]:
-                                current_date = utils.get_date_from_callback(current_date)
-
-                                current_substitutions = self._data.get_substitutions(current_date)
-
-                                await self._bot.edit_message_text(
-                                    chat_id=call.message.chat.id,
-                                    message_id=call.message.message_id,
-                                    text=self._strings.menu.manage_substitutions(
-                                        date=current_date,
-                                        substitutions=current_substitutions,
-                                    ),
-                                    reply_markup=self._keyboards.manage_substitutions(
-                                        date=current_date,
-                                    ),
-                                )
-                            case ["upload_substitutions", current_date]:
-                                current_date = utils.get_date_from_callback(current_date)
-
-                                await self._bot.edit_message_text(
-                                    chat_id=call.message.chat.id,
-                                    message_id=call.message.message_id,
-                                    text=self._strings.menu.upload_substitutions(
-                                        date=current_date,
-                                        workbook_extension=self._config.settings.workbook_extension,
-                                    ),
-                                    reply_markup=self._keyboards.upload_substitutions(
-                                        date=current_date,
-                                    ),
-                                )
-
-                                await state.set_state(data.States.upload_substitutions)
-                                await state.set_data(
-                                    data={
-                                        "current_date": current_date,
-                                    },
-                                )
-                            case ["delete_substitutions", current_date]:
-                                current_date = utils.get_date_from_callback(current_date)
-
-                                current_substitutions = self._data.get_substitutions(current_date)
-
-                                if current_substitutions:
-                                    self._data.update_substitutions(
-                                        date=current_date,
-                                        substitutions=[],
-                                    )
-
-                                    current_substitutions = self._data.get_substitutions(current_date)
-
-                                    await self._bot.edit_message_text(
-                                        chat_id=call.message.chat.id,
-                                        message_id=call.message.message_id,
-                                        text=self._strings.menu.manage_substitutions(
-                                            date=current_date,
-                                            substitutions=current_substitutions,
-                                        ),
-                                        reply_markup=self._keyboards.manage_substitutions(
-                                            date=current_date,
-                                        ),
-                                    )
-
-                                    await self._bot.answer_callback_query(
-                                        callback_query_id=call.id,
-                                        text=self._strings.alert.substitutions_deleted(),
-                                        show_alert=True,
-                                    )
-                                else:
-                                    await self._bot.answer_callback_query(
-                                        callback_query_id=call.id,
-                                        text=self._strings.alert.substitutions_unavailable(),
-                                        show_alert=True,
-                                    )
-                            case ["export_logs"]:
-                                if self._config.settings.file_logging:
-                                    logs_file = self._logger.file
-
-                                    await self._bot.send_document(
-                                        chat_id=call.message.chat.id,
-                                        message_thread_id=utils.get_message_thread_id(call.message),
-                                        document=aiogram.types.BufferedInputFile(
-                                            file=logs_file.read(),
-                                            filename=logs_file.name,
-                                        ),
-                                    )
-
-                                    logs_file.close()
-                                else:
-                                    await self._bot.answer_callback_query(
-                                        callback_query_id=call.id,
-                                        text=self._strings.alert.export_logs_unavailable(),
-                                        show_alert=True,
-                                    )
-                            case _:
-                                await self._bot.answer_callback_query(
-                                    callback_query_id=call.id,
-                                    text=self._strings.alert.button_unavailable(),
-                                    show_alert=True,
-                                )
-                    else:
-                        await self._bot.answer_callback_query(
-                            callback_query_id=call.id,
-                            text=self._strings.alert.button_unavailable(),
-                            show_alert=True,
-                        )
-        except Exception as e:
-            if type(e) not in constants.IGNORED_EXCEPTIONS:
-                self._logger.log_error(e)
+                    await self._bot.answer_callback_query(
+                        callback_query_id=call.id,
+                        text=self._strings.alert.button_unavailable(),
+                        show_alert=True,
+                    )
+        except Exception as exception:
+            if type(exception) not in constants.IGNORED_EXCEPTIONS:
+                self._logger.log_error(exception)
         finally:
             await self._bot.answer_callback_query(
                 callback_query_id=call.id,
