@@ -87,6 +87,10 @@ class StringsProvider(pyquoks.data.StringsProvider):
             return "Просмотр расписания"
 
         @classmethod
+        def schedule_readable(cls, date: datetime.datetime) -> str:
+            return f"Расписание на {utils.get_readable_date(date)}"
+
+        @classmethod
         def view_groups(cls) -> str:
             return "Выбрать группу"
 
@@ -385,6 +389,12 @@ class ButtonsProvider:
     def schedule(date: datetime.datetime) -> aiogram.types.InlineKeyboardButton:
         return aiogram.types.InlineKeyboardButton(
             text=utils.get_readable_date(date),
+            callback_data=f"schedule {utils.get_callback_date(date)}",
+        )
+
+    def schedule_readable(self, date: datetime.datetime) -> aiogram.types.InlineKeyboardButton:
+        return aiogram.types.InlineKeyboardButton(
+            text=self._strings.button.schedule_readable(date),
             callback_data=f"schedule {utils.get_callback_date(date)}",
         )
 
@@ -778,7 +788,7 @@ class KeyboardsProvider:
 
     def notification_substitutions_uploaded(self, date: datetime.datetime) -> aiogram.types.InlineKeyboardMarkup:
         markup_builder = aiogram.utils.keyboard.InlineKeyboardBuilder()
-        markup_builder.row(self._buttons.schedule(date))
+        markup_builder.row(self._buttons.schedule_readable(date))
 
         return markup_builder.as_markup()
 

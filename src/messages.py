@@ -56,23 +56,31 @@ class MessagesRouter(aiogram.Router):
             has_group: bool = None,
             is_admin: bool = None,
     ) -> bool:
+        self._logger.info(
+            msg=f"{self._users_filter.__name__} ({user=}, {is_notifiable=}, {has_group=}, {is_admin=})",
+        )
+
         if (is_notifiable is not None) and not (is_notifiable == user.is_notifiable):
             return False
 
         if (has_group is not None) and not (has_group == bool(user.group)):
             return False
 
-        if (is_admin is not None) and not (is_admin == user.id in self._config.settings.admins_list):
+        if (is_admin is not None) and not (is_admin == (user.id in self._config.settings.admins_list)):
             return False
 
         return True
 
-    async def _send_notification(
+    async def _send_notifications(
             self,
             users: list[models.User],
             text: str,
             reply_markup: aiogram.types.InlineKeyboardMarkup,
     ) -> None:
+        self._logger.info(
+            msg=self._send_notifications.__name__,
+        )
+
         for user in users:
             try:
                 await self._bot.send_message(
@@ -85,7 +93,11 @@ class MessagesRouter(aiogram.Router):
                     self._logger.log_error(exception)
 
     async def _send_schedule_uploaded_notifications(self) -> None:
-        await self._send_notification(
+        self._logger.info(
+            msg=self._send_schedule_uploaded_notifications.__name__,
+        )
+
+        await self._send_notifications(
             users=list(
                 filter(
                     lambda user: self._users_filter(
@@ -102,7 +114,11 @@ class MessagesRouter(aiogram.Router):
         )
 
     async def _send_substitutions_uploaded_notifications(self, date: datetime.datetime) -> None:
-        await self._send_notification(
+        self._logger.info(
+            msg=f"{self._send_substitutions_uploaded_notifications.__name__} ({date=})",
+        )
+
+        await self._send_notifications(
             users=list(
                 filter(
                     lambda user: self._users_filter(
