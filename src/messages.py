@@ -62,7 +62,7 @@ class MessagesRouter(aiogram.Router):
         if (has_group is not None) and not (has_group == bool(user.group)):
             return False
 
-        if (is_admin is not None) and not (is_admin == user.id in self._config.settings.admins_list):
+        if (is_admin is not None) and not (is_admin == (user.id in self._config.settings.admins_list)):
             return False
 
         return True
