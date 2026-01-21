@@ -107,7 +107,7 @@ class CallbacksRouter(aiogram.Router):
                             text=self._strings.alert.group_not_selected(),
                             show_alert=True,
                         )
-                    elif not current_user.group in [self._data.schedule]:
+                    elif not current_user.group in [schedule.group for schedule in self._data.schedule]:
                         await self._bot.answer_callback_query(
                             callback_query_id=call.id,
                             text=self._strings.alert.group_missing_in_schedule(),
