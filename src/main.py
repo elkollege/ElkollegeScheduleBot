@@ -1,32 +1,31 @@
 import asyncio
 import logging
 
-import data
-import dispatcher
+import elkollege_schedule_bot
 
 
 async def main() -> None:
-    environment_provider = data.EnvironmentProvider()
-    strings_provider = data.StringsProvider()
-    config_manager = data.ConfigManager()
-    data_manager = data.DataManager()
-    database_manager = data.DatabaseManager()
-    buttons_provider = data.ButtonsProvider(
+    config_manager = elkollege_schedule_bot.managers.config.ConfigManager()
+    data_manager = elkollege_schedule_bot.managers.data.DataManager()
+    database_manager = elkollege_schedule_bot.managers.database.DatabaseManager()
+    environment_provider = elkollege_schedule_bot.providers.environment.EnvironmentProvider()
+    strings_provider = elkollege_schedule_bot.providers.strings.StringsProvider()
+    buttons_provider = elkollege_schedule_bot.providers.buttons.ButtonsProvider(
         strings_provider=strings_provider,
     )
-    keyboards_provider = data.KeyboardsProvider(
+    keyboards_provider = elkollege_schedule_bot.providers.keyboards.KeyboardsProvider(
         buttons_provider=buttons_provider,
     )
 
-    bot = dispatcher.AiogramDispatcher(
-        environment_provider=environment_provider,
-        strings_provider=strings_provider,
-        keyboards_provider=keyboards_provider,
+    bot = elkollege_schedule_bot.dispatcher.AiogramDispatcher(
         config_manager=config_manager,
         data_manager=data_manager,
         database_manager=database_manager,
-        logger_service=data.LoggerService(
-            filename=dispatcher.__name__,
+        environment_provider=environment_provider,
+        keyboards_provider=keyboards_provider,
+        strings_provider=strings_provider,
+        logger_service=elkollege_schedule_bot.services.logger.LoggerService(
+            filename=elkollege_schedule_bot.dispatcher.__name__,
             file_handling=config_manager.settings.file_logging,
             level=logging.INFO,
         ),

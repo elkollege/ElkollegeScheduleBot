@@ -1,11 +1,11 @@
 import aiogram
 import aiogram.client.default
 
-import callbacks
-import commands
-import constants
-import data
-import messages
+import elkollege_schedule_bot.constants
+import elkollege_schedule_bot.managers
+import elkollege_schedule_bot.providers
+import elkollege_schedule_bot.routers
+import elkollege_schedule_bot.services
 
 
 class AiogramDispatcher(aiogram.Dispatcher):
@@ -18,20 +18,20 @@ class AiogramDispatcher(aiogram.Dispatcher):
 
     def __init__(
             self,
-            environment_provider: data.EnvironmentProvider,
-            strings_provider: data.StringsProvider,
-            keyboards_provider: data.KeyboardsProvider,
-            config_manager: data.ConfigManager,
-            data_manager: data.DataManager,
-            database_manager: data.DatabaseManager,
-            logger_service: data.LoggerService,
+            config_manager: elkollege_schedule_bot.managers.config.ConfigManager,
+            data_manager: elkollege_schedule_bot.managers.data.DataManager,
+            database_manager: elkollege_schedule_bot.managers.database.DatabaseManager,
+            environment_provider: elkollege_schedule_bot.providers.environment.EnvironmentProvider,
+            keyboards_provider: elkollege_schedule_bot.providers.keyboards.KeyboardsProvider,
+            strings_provider: elkollege_schedule_bot.providers.strings.StringsProvider,
+            logger_service: elkollege_schedule_bot.services.logger.LoggerService,
     ) -> None:
-        self._environment = environment_provider
-        self._strings = strings_provider
-        self._keyboards = keyboards_provider
         self._config = config_manager
         self._data = data_manager
         self._database = database_manager
+        self._environment = environment_provider
+        self._keyboards = keyboards_provider
+        self._strings = strings_provider
         self._logger = logger_service
         self._bot = aiogram.Bot(
             token=self._environment.TELEGRAM_BOT_TOKEN,
@@ -55,29 +55,29 @@ class AiogramDispatcher(aiogram.Dispatcher):
         )
 
         self.include_routers(
-            commands.CommandsRouter(
-                strings_provider=self._strings,
-                keyboards_provider=self._keyboards,
+            elkollege_schedule_bot.routers.commands.CommandsRouter(
                 config_manager=self._config,
                 database_manager=self._database,
+                keyboards_provider=self._keyboards,
+                strings_provider=self._strings,
                 logger_service=self._logger,
                 bot=self._bot,
             ),
-            callbacks.CallbacksRouter(
-                strings_provider=self._strings,
-                keyboards_provider=self._keyboards,
+            elkollege_schedule_bot.routers.callbacks.CallbacksRouter(
                 config_manager=self._config,
                 data_manager=self._data,
                 database_manager=self._database,
+                keyboards_provider=self._keyboards,
+                strings_provider=self._strings,
                 logger_service=self._logger,
                 bot=self._bot,
             ),
-            messages.MessagesRouter(
-                strings_provider=self._strings,
-                keyboards_provider=self._keyboards,
+            elkollege_schedule_bot.routers.messages.MessagesRouter(
                 config_manager=self._config,
                 data_manager=self._data,
                 database_manager=self._database,
+                keyboards_provider=self._keyboards,
+                strings_provider=self._strings,
                 logger_service=self._logger,
                 bot=self._bot,
             )
@@ -102,7 +102,7 @@ class AiogramDispatcher(aiogram.Dispatcher):
     # region Handlers
 
     async def error_handler(self, event: aiogram.types.ErrorEvent) -> None:
-        if type(event.exception) not in constants.IGNORED_EXCEPTIONS:
+        if type(event.exception) not in elkollege_schedule_bot.constants.IGNORED_EXCEPTIONS:
             self._logger.log_error(
                 exception=event.exception,
             )
