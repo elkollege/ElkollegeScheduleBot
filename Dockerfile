@@ -6,4 +6,4 @@ RUN python -m pip install --no-cache-dir -r requirements.txt
 
 COPY src .
 
-CMD ["/bin/bash", "-c", "python main.py"]
+CMD ["/bin/bash", "-c", "python -m elkollege_schedule_bot"]

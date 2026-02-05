@@ -1,7 +1,10 @@
 import asyncio
 import logging
 
-import elkollege_schedule_bot
+import elkollege_schedule_bot.dispatcher
+import elkollege_schedule_bot.managers
+import elkollege_schedule_bot.providers
+import elkollege_schedule_bot.services
 
 
 async def main() -> None:
@@ -17,7 +20,7 @@ async def main() -> None:
         buttons_provider=buttons_provider,
     )
 
-    bot = elkollege_schedule_bot.dispatcher.AiogramDispatcher(
+    aiogram_dispatcher = elkollege_schedule_bot.dispatcher.AiogramDispatcher(
         config_manager=config_manager,
         data_manager=data_manager,
         database_manager=database_manager,
@@ -30,7 +33,7 @@ async def main() -> None:
             level=logging.INFO,
         ),
     )
-    await bot.polling_coroutine()
+    await aiogram_dispatcher.polling_coroutine()
 
 
 if __name__ == "__main__":
