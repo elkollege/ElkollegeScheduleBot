@@ -42,8 +42,8 @@ class ButtonsProvider:
     @staticmethod
     def group(group: schedule_parser.models.GroupSchedule) -> aiogram.types.InlineKeyboardButton:
         return aiogram.types.InlineKeyboardButton(
-            text=group.group,
-            callback_data=f"group {group.group}",
+            text=group.group_name,
+            callback_data=f"group {group.group_name}",
         )
 
     def settings(self) -> aiogram.types.InlineKeyboardButton:
