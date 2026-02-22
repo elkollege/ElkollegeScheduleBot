@@ -110,7 +110,7 @@ class CallbacksRouter(aiogram.Router):
                             text=self._strings.alert.group_not_selected(),
                             show_alert=True,
                         )
-                    elif not current_user.group in [schedule.group for schedule in self._data.schedule]:
+                    elif not current_user.group in [schedule.group_name for schedule in self._data.schedule]:
                         await self._bot.answer_callback_query(
                             callback_query_id=call.id,
                             text=self._strings.alert.group_missing_in_schedule(),
@@ -126,10 +126,10 @@ class CallbacksRouter(aiogram.Router):
                             message_id=call.message.message_id,
                             text=self._strings.menu.schedule(
                                 date=current_date,
-                                schedule=schedule_parser.utils.get_schedule_with_substitutions(
+                                schedule=schedule_parser.utils.apply_substitutions_to_schedule(
                                     schedule=self._data.schedule,
                                     substitutions=current_substitutions,
-                                    group=current_user.group,
+                                    group_name=current_user.group,
                                     date=current_date,
                                 ),
                                 has_substitutions=bool(current_substitutions),
