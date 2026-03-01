@@ -1,7 +1,7 @@
 import datetime
 
 import aiogram
-import schedule_parser
+import schedule_parser.models
 
 from .. import constants
 from .. import utils

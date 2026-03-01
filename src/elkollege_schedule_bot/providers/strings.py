@@ -3,7 +3,7 @@ import textwrap
 
 import aiogram
 import pyquoks
-import schedule_parser
+import schedule_parser.models
 
 from .. import models
 from .. import utils

@@ -3,7 +3,7 @@ import itertools
 import math
 
 import aiogram.utils.keyboard
-import schedule_parser
+import schedule_parser.models
 
 from .. import constants
 from .. import models

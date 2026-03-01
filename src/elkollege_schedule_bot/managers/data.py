@@ -3,7 +3,7 @@ import json
 import os
 
 import pyquoks
-import schedule_parser
+import schedule_parser.models
 
 from .. import utils
 

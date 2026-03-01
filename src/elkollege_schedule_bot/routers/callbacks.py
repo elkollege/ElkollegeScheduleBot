@@ -3,7 +3,7 @@ import aiogram.exceptions
 import aiogram.filters
 import aiogram.fsm.context
 import pyquoks
-import schedule_parser
+import schedule_parser.models
 
 from .. import constants
 from .. import models
@@ -120,8 +120,11 @@ class CallbacksRouter(aiogram.Router):
                             show_alert=True,
                         )
                     else:
-                        current_substitutions = self._data.get_substitutions(
-                            date=current_date,
+                        current_substitutions = schedule_parser.models.Substitution.get_substitutions_by_group_name(
+                            iterable=self._data.get_substitutions(
+                                date=current_date,
+                            ),
+                            group_name=current_user.group,
                         )
 
                         await self._bot.edit_message_text(
@@ -130,10 +133,13 @@ class CallbacksRouter(aiogram.Router):
                             text=self._strings.menu.schedule(
                                 date=current_date,
                                 schedule=schedule_parser.utils.apply_substitutions_to_schedule(
-                                    schedule=self._data.schedule,
+                                    schedule=schedule_parser.models.GroupSchedule.get_group_schedule_by_group_name(
+                                        iterable=self._data.schedule,
+                                        group_name=current_user.group,
+                                    ).get_day_schedule_by_weekday(
+                                        weekday=current_date.weekday(),
+                                    ).periods_list,
                                     substitutions=current_substitutions,
-                                    group_name=current_user.group,
-                                    date=current_date,
                                 ),
                                 has_substitutions=bool(current_substitutions),
                             ),

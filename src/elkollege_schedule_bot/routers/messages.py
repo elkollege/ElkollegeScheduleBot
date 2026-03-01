@@ -4,7 +4,7 @@ import aiogram
 import aiogram.filters
 import aiogram.fsm.context
 import openpyxl
-import schedule_parser
+import schedule_parser.utils
 
 from .. import constants
 from .. import models
