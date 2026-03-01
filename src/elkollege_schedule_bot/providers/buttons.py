@@ -3,13 +3,13 @@ import datetime
 import aiogram
 import schedule_parser
 
-import elkollege_schedule_bot.constants
-import elkollege_schedule_bot.providers
-import elkollege_schedule_bot.utils
+from .. import constants
+from .. import utils
+from ..providers import strings
 
 
 class ButtonsProvider:
-    def __init__(self, strings_provider: elkollege_schedule_bot.providers.strings.StringsProvider) -> None:
+    def __init__(self, strings_provider: strings.StringsProvider) -> None:
         self._strings = strings_provider
 
     # region /start
@@ -23,20 +23,20 @@ class ButtonsProvider:
     @staticmethod
     def schedule(date: datetime.datetime) -> aiogram.types.InlineKeyboardButton:
         return aiogram.types.InlineKeyboardButton(
-            text=elkollege_schedule_bot.utils.get_readable_date(date),
-            callback_data=f"schedule {elkollege_schedule_bot.utils.get_callback_date(date)}",
+            text=utils.get_readable_date(date),
+            callback_data=f"schedule {utils.get_callback_date(date)}",
         )
 
     def schedule_readable(self, date: datetime.datetime) -> aiogram.types.InlineKeyboardButton:
         return aiogram.types.InlineKeyboardButton(
             text=self._strings.button.schedule_readable(date),
-            callback_data=f"schedule {elkollege_schedule_bot.utils.get_callback_date(date)}",
+            callback_data=f"schedule {utils.get_callback_date(date)}",
         )
 
     def view_groups(self) -> aiogram.types.InlineKeyboardButton:
         return aiogram.types.InlineKeyboardButton(
             text=self._strings.button.view_groups(),
-            callback_data=f"view_groups {elkollege_schedule_bot.constants.FIRST_PAGE}",
+            callback_data=f"view_groups {constants.FIRST_PAGE}",
         )
 
     @staticmethod
@@ -94,20 +94,20 @@ class ButtonsProvider:
     @staticmethod
     def manage_substitutions(date: datetime.datetime) -> aiogram.types.InlineKeyboardButton:
         return aiogram.types.InlineKeyboardButton(
-            text=elkollege_schedule_bot.utils.get_readable_date(date),
-            callback_data=f"manage_substitutions {elkollege_schedule_bot.utils.get_callback_date(date)}",
+            text=utils.get_readable_date(date),
+            callback_data=f"manage_substitutions {utils.get_callback_date(date)}",
         )
 
     def upload_substitutions(self, date: datetime.datetime) -> aiogram.types.InlineKeyboardButton:
         return aiogram.types.InlineKeyboardButton(
             text=self._strings.button.upload(),
-            callback_data=f"upload_substitutions {elkollege_schedule_bot.utils.get_callback_date(date)}",
+            callback_data=f"upload_substitutions {utils.get_callback_date(date)}",
         )
 
     def delete_substitutions(self, date: datetime.datetime) -> aiogram.types.InlineKeyboardButton:
         return aiogram.types.InlineKeyboardButton(
             text=self._strings.button.delete(),
-            callback_data=f"delete_substitutions {elkollege_schedule_bot.utils.get_callback_date(date)}",
+            callback_data=f"delete_substitutions {utils.get_callback_date(date)}",
         )
 
     def export_logs(self) -> aiogram.types.InlineKeyboardButton:
@@ -153,7 +153,7 @@ class ButtonsProvider:
     def back_to_manage_substitutions(self, date: datetime.datetime) -> aiogram.types.InlineKeyboardButton:
         return aiogram.types.InlineKeyboardButton(
             text=self._strings.button.back(),
-            callback_data=f"manage_substitutions {elkollege_schedule_bot.utils.get_callback_date(date)}",
+            callback_data=f"manage_substitutions {utils.get_callback_date(date)}",
         )
 
     def cancel_to_manage_schedule(self) -> aiogram.types.InlineKeyboardButton:
@@ -165,7 +165,7 @@ class ButtonsProvider:
     def cancel_to_manage_substitutions(self, date: datetime.datetime) -> aiogram.types.InlineKeyboardButton:
         return aiogram.types.InlineKeyboardButton(
             text=self._strings.button.cancel(),
-            callback_data=f"manage_substitutions {elkollege_schedule_bot.utils.get_callback_date(date)}",
+            callback_data=f"manage_substitutions {utils.get_callback_date(date)}",
         )
 
     # endregion
@@ -209,7 +209,7 @@ class ButtonsProvider:
     ) -> aiogram.types.InlineKeyboardButton:
         return aiogram.types.InlineKeyboardButton(
             text=self._strings.button.view_schedules(),
-            callback_data=f"schedule {elkollege_schedule_bot.utils.get_callback_date(date)}",
+            callback_data=f"schedule {utils.get_callback_date(date)}",
         )
 
     # endregion

@@ -5,19 +5,20 @@ import os
 import pyquoks
 import schedule_parser
 
-import elkollege_schedule_bot.utils
+from .. import utils
 
 
 class DataManager(pyquoks.managers.data.DataManager):
     schedule: list[schedule_parser.models.GroupSchedule]
 
+    def _get_substitutions_filename(self, date: datetime.datetime) -> str:
+        string_date = utils.get_callback_date(date)
+
+        return self._FILENAME.format(f"substitutions_{string_date}")
+
     def get_substitutions(self, date: datetime.datetime) -> list[schedule_parser.models.Substitution]:
         try:
-            with open(
-                    self._PATH + self._FILENAME.format(
-                        f"substitutions_{elkollege_schedule_bot.utils.get_callback_date(date)}"),
-                    "rb",
-            ) as file:
+            with open(self._PATH + self._get_substitutions_filename(date), "rb") as file:
                 data = json.loads(file.read())
 
                 return [schedule_parser.models.Substitution(**model) for model in data]
@@ -34,15 +35,10 @@ class DataManager(pyquoks.managers.data.DataManager):
             exist_ok=True,
         )
 
-        with open(
-                self._PATH + self._FILENAME.format(
-                    f"substitutions_{elkollege_schedule_bot.utils.get_callback_date(date)}"),
-                "w",
-                encoding="utf-8",
-        ) as file:
+        with open(self._PATH + self._get_substitutions_filename(date), "w", encoding="utf-8") as file:
             json.dump(
                 [model.model_dump() for model in substitutions],
-                fp=file,
+                file,
                 ensure_ascii=False,
                 indent=2,
             )

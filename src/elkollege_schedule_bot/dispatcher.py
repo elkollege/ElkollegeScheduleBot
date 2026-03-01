@@ -1,11 +1,17 @@
 import aiogram
 import aiogram.client.default
 
-import elkollege_schedule_bot.constants
-import elkollege_schedule_bot.managers
-import elkollege_schedule_bot.providers
-import elkollege_schedule_bot.routers
-import elkollege_schedule_bot.services
+from . import constants
+from .managers import config
+from .managers import data
+from .managers import database
+from .providers import environment
+from .providers import keyboards
+from .providers import strings
+from .routers import callbacks
+from .routers import commands
+from .routers import messages
+from .services import logger
 
 
 class AiogramDispatcher(aiogram.Dispatcher):
@@ -18,13 +24,13 @@ class AiogramDispatcher(aiogram.Dispatcher):
 
     def __init__(
             self,
-            config_manager: elkollege_schedule_bot.managers.config.ConfigManager,
-            data_manager: elkollege_schedule_bot.managers.data.DataManager,
-            database_manager: elkollege_schedule_bot.managers.database.DatabaseManager,
-            environment_provider: elkollege_schedule_bot.providers.environment.EnvironmentProvider,
-            keyboards_provider: elkollege_schedule_bot.providers.keyboards.KeyboardsProvider,
-            strings_provider: elkollege_schedule_bot.providers.strings.StringsProvider,
-            logger_service: elkollege_schedule_bot.services.logger.LoggerService,
+            config_manager: config.ConfigManager,
+            data_manager: data.DataManager,
+            database_manager: database.DatabaseManager,
+            environment_provider: environment.EnvironmentProvider,
+            keyboards_provider: keyboards.KeyboardsProvider,
+            strings_provider: strings.StringsProvider,
+            logger_service: logger.LoggerService,
     ) -> None:
         self._config = config_manager
         self._data = data_manager
@@ -44,26 +50,18 @@ class AiogramDispatcher(aiogram.Dispatcher):
             name=self.__class__.__name__,
         )
 
-        self.errors.register(
-            self.error_handler,
-        )
         self.startup.register(
             self.startup_handler,
+        )
+        self.errors.register(
+            self.error_handler,
         )
         self.shutdown.register(
             self.shutdown_handler,
         )
 
         self.include_routers(
-            elkollege_schedule_bot.routers.commands.CommandsRouter(
-                config_manager=self._config,
-                database_manager=self._database,
-                keyboards_provider=self._keyboards,
-                strings_provider=self._strings,
-                logger_service=self._logger,
-                bot=self._bot,
-            ),
-            elkollege_schedule_bot.routers.callbacks.CallbacksRouter(
+            callbacks.CallbacksRouter(
                 config_manager=self._config,
                 data_manager=self._data,
                 database_manager=self._database,
@@ -72,7 +70,15 @@ class AiogramDispatcher(aiogram.Dispatcher):
                 logger_service=self._logger,
                 bot=self._bot,
             ),
-            elkollege_schedule_bot.routers.messages.MessagesRouter(
+            commands.CommandsRouter(
+                config_manager=self._config,
+                database_manager=self._database,
+                keyboards_provider=self._keyboards,
+                strings_provider=self._strings,
+                logger_service=self._logger,
+                bot=self._bot,
+            ),
+            messages.MessagesRouter(
                 config_manager=self._config,
                 data_manager=self._data,
                 database_manager=self._database,
@@ -80,7 +86,7 @@ class AiogramDispatcher(aiogram.Dispatcher):
                 strings_provider=self._strings,
                 logger_service=self._logger,
                 bot=self._bot,
-            )
+            ),
         )
 
         self._logger.info(f"{self.name} initialized!")
@@ -101,12 +107,6 @@ class AiogramDispatcher(aiogram.Dispatcher):
 
     # region Handlers
 
-    async def error_handler(self, event: aiogram.types.ErrorEvent) -> None:
-        if type(event.exception) not in elkollege_schedule_bot.constants.IGNORED_EXCEPTIONS:
-            self._logger.log_error(
-                exception=event.exception,
-            )
-
     async def startup_handler(self) -> None:
         await self._bot.set_my_commands(
             commands=self._COMMANDS,
@@ -114,6 +114,12 @@ class AiogramDispatcher(aiogram.Dispatcher):
         )
 
         self._logger.info(f"{self.name} started!")
+
+    async def error_handler(self, event: aiogram.types.ErrorEvent) -> None:
+        if type(event.exception) not in constants.IGNORED_EXCEPTIONS:
+            self._logger.log_error(
+                exception=event.exception,
+            )
 
     async def shutdown_handler(self) -> None:
         self._logger.info(f"{self.name} terminated")

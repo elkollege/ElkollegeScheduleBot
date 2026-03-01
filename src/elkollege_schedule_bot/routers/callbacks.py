@@ -5,24 +5,27 @@ import aiogram.fsm.context
 import pyquoks
 import schedule_parser
 
-import elkollege_schedule_bot.constants
-import elkollege_schedule_bot.managers
-import elkollege_schedule_bot.models
-import elkollege_schedule_bot.providers
-import elkollege_schedule_bot.services
-import elkollege_schedule_bot.states
-import elkollege_schedule_bot.utils
+from .. import constants
+from .. import models
+from .. import states
+from .. import utils
+from ..managers import config
+from ..managers import data
+from ..managers import database
+from ..providers import keyboards
+from ..providers import strings
+from ..services import logger
 
 
 class CallbacksRouter(aiogram.Router):
     def __init__(
             self,
-            config_manager: elkollege_schedule_bot.managers.config.ConfigManager,
-            data_manager: elkollege_schedule_bot.managers.data.DataManager,
-            database_manager: elkollege_schedule_bot.managers.database.DatabaseManager,
-            keyboards_provider: elkollege_schedule_bot.providers.keyboards.KeyboardsProvider,
-            strings_provider: elkollege_schedule_bot.providers.strings.StringsProvider,
-            logger_service: elkollege_schedule_bot.services.logger.LoggerService,
+            config_manager: config.ConfigManager,
+            data_manager: data.DataManager,
+            database_manager: database.DatabaseManager,
+            keyboards_provider: keyboards.KeyboardsProvider,
+            strings_provider: strings.StringsProvider,
+            logger_service: logger.LoggerService,
             bot: aiogram.Bot,
     ) -> None:
         self._config = config_manager
@@ -60,9 +63,9 @@ class CallbacksRouter(aiogram.Router):
         await state.clear()
 
         self._database.users.add_user(
-            user=elkollege_schedule_bot.models.User(
+            user=models.User(
                 id=call.from_user.id,
-                **elkollege_schedule_bot.models.User._default_values(),
+                **models.User._default_values(),
             ),
         )
 
@@ -85,7 +88,7 @@ class CallbacksRouter(aiogram.Router):
                     if not self._data.schedule:
                         await self._bot.answer_callback_query(
                             callback_query_id=call.id,
-                            text=self._strings.alert.schedule_unavailable(),
+                            text=self._strings.alert.schedule_missing(),
                             show_alert=True,
                         )
                     else:
@@ -96,12 +99,12 @@ class CallbacksRouter(aiogram.Router):
                             reply_markup=self._keyboards.view_schedules(),
                         )
                 case ["schedule", current_date]:
-                    current_date = elkollege_schedule_bot.utils.get_date_from_callback(current_date)
+                    current_date = utils.get_date_from_callback(current_date)
 
                     if not self._data.schedule:
                         await self._bot.answer_callback_query(
                             callback_query_id=call.id,
-                            text=self._strings.alert.schedule_unavailable(),
+                            text=self._strings.alert.schedule_missing(),
                             show_alert=True,
                         )
                     elif not current_user.group:
@@ -142,7 +145,7 @@ class CallbacksRouter(aiogram.Router):
                     if not self._data.schedule:
                         await self._bot.answer_callback_query(
                             callback_query_id=call.id,
-                            text=self._strings.alert.schedule_unavailable(),
+                            text=self._strings.alert.schedule_missing(),
                             show_alert=True,
                         )
                     else:
@@ -231,12 +234,12 @@ class CallbacksRouter(aiogram.Router):
                         reply_markup=self._keyboards.upload_schedule(),
                     )
 
-                    await state.set_state(elkollege_schedule_bot.states.States.upload_schedule)
+                    await state.set_state(states.States.upload_schedule)
                 case ["delete_schedule"] if is_admin:
                     if not self._data.schedule:
                         await self._bot.answer_callback_query(
                             callback_query_id=call.id,
-                            text=self._strings.alert.schedule_unavailable(),
+                            text=self._strings.alert.schedule_missing(),
                             show_alert=True,
                         )
                     else:
@@ -266,7 +269,7 @@ class CallbacksRouter(aiogram.Router):
                         reply_markup=self._keyboards.select_substitutions(),
                     )
                 case ["manage_substitutions", current_date] if is_admin:
-                    current_date = elkollege_schedule_bot.utils.get_date_from_callback(current_date)
+                    current_date = utils.get_date_from_callback(current_date)
 
                     await self._bot.edit_message_text(
                         chat_id=call.message.chat.id,
@@ -282,7 +285,7 @@ class CallbacksRouter(aiogram.Router):
                         ),
                     )
                 case ["upload_substitutions", current_date] if is_admin:
-                    current_date = elkollege_schedule_bot.utils.get_date_from_callback(current_date)
+                    current_date = utils.get_date_from_callback(current_date)
 
                     await self._bot.edit_message_text(
                         chat_id=call.message.chat.id,
@@ -296,14 +299,14 @@ class CallbacksRouter(aiogram.Router):
                         ),
                     )
 
-                    await state.set_state(elkollege_schedule_bot.states.States.upload_substitutions)
+                    await state.set_state(states.States.upload_substitutions)
                     await state.set_data(
                         data={
                             "current_date": current_date,
                         },
                     )
                 case ["delete_substitutions", current_date] if is_admin:
-                    current_date = elkollege_schedule_bot.utils.get_date_from_callback(current_date)
+                    current_date = utils.get_date_from_callback(current_date)
 
                     current_substitutions = self._data.get_substitutions(current_date)
 
@@ -350,7 +353,7 @@ class CallbacksRouter(aiogram.Router):
 
                         await self._bot.send_document(
                             chat_id=call.message.chat.id,
-                            message_thread_id=elkollege_schedule_bot.utils.get_message_thread_id(call.message),
+                            message_thread_id=utils.get_message_thread_id(call.message),
                             document=aiogram.types.BufferedInputFile(
                                 file=logs_file.read(),
                                 filename=logs_file.name,
@@ -369,7 +372,7 @@ class CallbacksRouter(aiogram.Router):
                         show_alert=True,
                     )
         except Exception as exception:
-            if type(exception) not in elkollege_schedule_bot.constants.IGNORED_EXCEPTIONS:
+            if type(exception) not in constants.IGNORED_EXCEPTIONS:
                 self._logger.log_error(exception)
         finally:
             await self._bot.answer_callback_query(

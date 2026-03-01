@@ -5,13 +5,13 @@ import math
 import aiogram.utils.keyboard
 import schedule_parser
 
-import elkollege_schedule_bot.constants
-import elkollege_schedule_bot.models
-import elkollege_schedule_bot.providers
+from .. import constants
+from .. import models
+from ..providers import buttons
 
 
 class KeyboardsProvider:
-    def __init__(self, buttons_provider: elkollege_schedule_bot.providers.buttons.ButtonsProvider) -> None:
+    def __init__(self, buttons_provider: buttons.ButtonsProvider) -> None:
         self._buttons = buttons_provider
 
     # region Helpers
@@ -34,11 +34,11 @@ class KeyboardsProvider:
         return (
             self._buttons.page_previous(
                 callback=f"{callback} {page_previous}",
-                is_answer_callback=page_previous < elkollege_schedule_bot.constants.FIRST_PAGE,
+                is_answer_callback=page_previous < constants.FIRST_PAGE,
             ),
             self._buttons.page_info(
-                callback=f"{callback} {elkollege_schedule_bot.constants.FIRST_PAGE}",
-                is_answer_callback=page == elkollege_schedule_bot.constants.FIRST_PAGE,
+                callback=f"{callback} {constants.FIRST_PAGE}",
+                is_answer_callback=page == constants.FIRST_PAGE,
                 page_current=page,
                 pages_total=pages_total,
             ),
@@ -72,7 +72,7 @@ class KeyboardsProvider:
                     current_date + datetime.timedelta(
                         days=days_delta,
                     ),
-                ) for days_delta in range(elkollege_schedule_bot.constants.SCHEDULE_DAYS)
+                ) for days_delta in range(constants.SCHEDULE_DAYS)
             ],
         )
         markup_builder.row(self._buttons.back_to_start())
@@ -98,25 +98,25 @@ class KeyboardsProvider:
                 self._buttons.group(group) for group in list(
                     itertools.batched(
                         groups,
-                        elkollege_schedule_bot.constants.GROUPS_PER_PAGE
+                        constants.GROUPS_PER_PAGE
                     )
                 )[buttons_index]
             ],
-            width=elkollege_schedule_bot.constants.GROUPS_PER_ROW,
+            width=constants.GROUPS_PER_ROW,
         )
         markup_builder.row(
             *self._get_page_buttons(
                 callback="view_groups",
                 page=page,
                 items_count=len(groups),
-                items_per_page=elkollege_schedule_bot.constants.GROUPS_PER_PAGE,
+                items_per_page=constants.GROUPS_PER_PAGE,
             ),
         )
         markup_builder.row(self._buttons.back_to_start())
 
         return markup_builder.as_markup()
 
-    def settings(self, user: elkollege_schedule_bot.models.User) -> aiogram.types.InlineKeyboardMarkup:
+    def settings(self, user: models.User) -> aiogram.types.InlineKeyboardMarkup:
         markup_builder = aiogram.utils.keyboard.InlineKeyboardBuilder()
         markup_builder.row(
             *[
@@ -125,7 +125,7 @@ class KeyboardsProvider:
                     value=getattr(user, setting)
                 ) for setting in user._switchable_values()
             ],
-            width=elkollege_schedule_bot.constants.SETTINGS_PER_ROW,
+            width=constants.SETTINGS_PER_ROW,
         )
         markup_builder.row(self._buttons.back_to_start())
 
@@ -177,7 +177,7 @@ class KeyboardsProvider:
                     current_date + datetime.timedelta(
                         days=days_delta,
                     ),
-                ) for days_delta in range(elkollege_schedule_bot.constants.SCHEDULE_DAYS)
+                ) for days_delta in range(constants.SCHEDULE_DAYS)
             ],
         )
         markup_builder.row(self._buttons.back_to_admin())

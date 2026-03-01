@@ -2,21 +2,23 @@ import aiogram
 import aiogram.filters
 import pyquoks
 
-import elkollege_schedule_bot.managers
-import elkollege_schedule_bot.models
-import elkollege_schedule_bot.providers
-import elkollege_schedule_bot.services
-import elkollege_schedule_bot.utils
+from .. import models
+from .. import utils
+from ..managers import config
+from ..managers import database
+from ..providers import keyboards
+from ..providers import strings
+from ..services import logger
 
 
 class CommandsRouter(aiogram.Router):
     def __init__(
             self,
-            config_manager: elkollege_schedule_bot.managers.config.ConfigManager,
-            database_manager: elkollege_schedule_bot.managers.database.DatabaseManager,
-            keyboards_provider: elkollege_schedule_bot.providers.keyboards.KeyboardsProvider,
-            strings_provider: elkollege_schedule_bot.providers.strings.StringsProvider,
-            logger_service: elkollege_schedule_bot.services.logger.LoggerService,
+            config_manager: config.ConfigManager,
+            database_manager: database.DatabaseManager,
+            keyboards_provider: keyboards.KeyboardsProvider,
+            strings_provider: strings.StringsProvider,
+            logger_service: logger.LoggerService,
             bot: aiogram.Bot,
     ) -> None:
         self._config = config_manager
@@ -54,15 +56,15 @@ class CommandsRouter(aiogram.Router):
         )
 
         self._database.users.add_user(
-            user=elkollege_schedule_bot.models.User(
+            user=models.User(
                 id=message.from_user.id,
-                **elkollege_schedule_bot.models.User._default_values(),
+                **models.User._default_values(),
             ),
         )
 
         await self._bot.send_message(
             chat_id=message.chat.id,
-            message_thread_id=elkollege_schedule_bot.utils.get_message_thread_id(message),
+            message_thread_id=utils.get_message_thread_id(message),
             text=self._strings.menu.start(
                 user=message.from_user,
             ),
@@ -84,7 +86,7 @@ class CommandsRouter(aiogram.Router):
         if is_admin:
             await self._bot.send_message(
                 chat_id=message.chat.id,
-                message_thread_id=elkollege_schedule_bot.utils.get_message_thread_id(message),
+                message_thread_id=utils.get_message_thread_id(message),
                 text=self._strings.menu.admin(
                     user=message.from_user,
                     time_started=pyquoks.utils.get_process_created_datetime(),

@@ -5,8 +5,8 @@ import aiogram
 import pyquoks
 import schedule_parser
 
-import elkollege_schedule_bot.models
-import elkollege_schedule_bot.utils
+from .. import models
+from .. import utils
 
 
 class StringsProvider(pyquoks.providers.strings.StringsProvider):
@@ -37,8 +37,8 @@ class AlertStrings(pyquoks.providers.strings.Strings):
     # region /admin
 
     @classmethod
-    def schedule_unavailable(cls) -> str:
-        return "Расписание недоступно!"
+    def schedule_missing(cls) -> str:
+        return "Расписание отсутствует!"
 
     @classmethod
     def schedule_deleted(cls) -> str:
@@ -46,7 +46,7 @@ class AlertStrings(pyquoks.providers.strings.Strings):
 
     @classmethod
     def substitutions_unavailable(cls) -> str:
-        return "Замены недоступны!"
+        return "Замены отсутствуют!"
 
     @classmethod
     def substitutions_deleted(cls) -> str:
@@ -73,7 +73,7 @@ class ButtonStrings(pyquoks.providers.strings.Strings):
 
     @classmethod
     def schedule_readable(cls, date: datetime.datetime) -> str:
-        return f"Расписание на {elkollege_schedule_bot.utils.get_readable_date(date)}"
+        return f"Расписание на {utils.get_readable_date(date)}"
 
     @classmethod
     def view_groups(cls) -> str:
@@ -157,7 +157,7 @@ class MenuStrings(pyquoks.providers.strings.Strings):
             Электростальского колледжа
             для вашей учебной группы.
             """,
-        )
+        ).rstrip()
 
     @classmethod
     def view_schedules(cls) -> str:
@@ -167,7 +167,7 @@ class MenuStrings(pyquoks.providers.strings.Strings):
 
             Выберите нужную дату:
             """,
-        )
+        ).rstrip()
 
     @classmethod
     def schedule(
@@ -181,8 +181,8 @@ class MenuStrings(pyquoks.providers.strings.Strings):
         else:
             readable_schedule = "*Пары отсутствуют*"
 
-        # different string format is used to avoid unnecessary leading whitespaces
-        return f"<b>Расписание на {elkollege_schedule_bot.utils.get_readable_date(date)}</b>{"\n*Замены не загружены*" if not has_substitutions else ""}\n\n{readable_schedule}"
+        # FIXME: different string format is used to avoid unnecessary leading whitespaces
+        return f"<b>Расписание на {utils.get_readable_date(date)}</b>{"\n\n*Замены не загружены*" if not has_substitutions else ""}\n\n{readable_schedule}"
 
     @classmethod
     def view_groups(cls) -> str:
@@ -193,10 +193,10 @@ class MenuStrings(pyquoks.providers.strings.Strings):
             Выберите свою учебную 
             группу из списка ниже:
             """,
-        )
+        ).rstrip()
 
     @classmethod
-    def settings(cls, user: elkollege_schedule_bot.models.User) -> str:
+    def settings(cls, user: models.User) -> str:
         return textwrap.dedent(
             f"""\
             <b>Настройки</b>
@@ -204,7 +204,7 @@ class MenuStrings(pyquoks.providers.strings.Strings):
             UserID: <b>{user.id}</b>
             {f"Группа: <b>{user.group}</b>" if user.group else ""}
             """,
-        )
+        ).rstrip()
 
     # endregion
 
@@ -220,7 +220,7 @@ class MenuStrings(pyquoks.providers.strings.Strings):
 
             Дата запуска: <b>{time_started.astimezone(datetime.UTC).strftime("%d.%m.%y %H:%M:%S")} UTC</b>
             """,
-        )
+        ).rstrip()
 
     @classmethod
     def manage_schedule(cls, schedule: list[schedule_parser.models.GroupSchedule]) -> str:
@@ -231,7 +231,7 @@ class MenuStrings(pyquoks.providers.strings.Strings):
             Статус расписания: <b>{"Загружено" if schedule else "Отсутствует"}</b>
             {f"Учебных групп: <b>{len(schedule)}</b>" if schedule else ""}
             """,
-        )
+        ).rstrip()
 
     @classmethod
     def upload_schedule(cls, workbook_extension: str) -> str:
@@ -241,7 +241,7 @@ class MenuStrings(pyquoks.providers.strings.Strings):
 
             Отправьте файл с расширением <b>\".{workbook_extension}\"</b>
             """,
-        )
+        ).rstrip()
 
     @classmethod
     def upload_schedule_error(cls) -> str:
@@ -251,7 +251,7 @@ class MenuStrings(pyquoks.providers.strings.Strings):
 
             Не удалось обработать расписание.
             """,
-        )
+        ).rstrip()
 
     @classmethod
     def upload_schedule_success(cls, schedule: list[schedule_parser.models.GroupSchedule]) -> str:
@@ -261,7 +261,7 @@ class MenuStrings(pyquoks.providers.strings.Strings):
 
             Учебных групп: <b>{len(schedule)}</b>
             """,
-        )
+        ).rstrip()
 
     @classmethod
     def view_substitutions(cls) -> str:
@@ -271,7 +271,7 @@ class MenuStrings(pyquoks.providers.strings.Strings):
 
             Выберите нужную дату:
             """,
-        )
+        ).rstrip()
 
     @classmethod
     def manage_substitutions(
@@ -281,22 +281,22 @@ class MenuStrings(pyquoks.providers.strings.Strings):
     ) -> str:
         return textwrap.dedent(
             f"""\
-            <b>Управление заменами на {elkollege_schedule_bot.utils.get_readable_date(date)}</b>
+            <b>Управление заменами на {utils.get_readable_date(date)}</b>
 
             Статус замен: <b>{"Загружены" if substitutions else "Отсутствуют"}</b>
             {f"Замен: <b>{len(substitutions)}</b>" if substitutions else ""}
             """,
-        )
+        ).rstrip()
 
     @classmethod
     def upload_substitutions(cls, date: datetime.datetime, workbook_extension: str) -> str:
         return textwrap.dedent(
             f"""\
-            <b>Загрузка замен на {elkollege_schedule_bot.utils.get_readable_date(date)}</b>
+            <b>Загрузка замен на {utils.get_readable_date(date)}</b>
 
             Отправьте файл с расширением <b>\".{workbook_extension}\"</b>
             """,
-        )
+        ).rstrip()
 
     @classmethod
     def upload_substitutions_error(cls) -> str:
@@ -306,7 +306,7 @@ class MenuStrings(pyquoks.providers.strings.Strings):
 
             Не удалось обработать замены.
             """,
-        )
+        ).rstrip()
 
     @classmethod
     def upload_substitutions_success(
@@ -316,11 +316,11 @@ class MenuStrings(pyquoks.providers.strings.Strings):
     ) -> str:
         return textwrap.dedent(
             f"""\
-            <b>Замены на {elkollege_schedule_bot.utils.get_readable_date(date)} загружены!</b>
+            <b>Замены на {utils.get_readable_date(date)} загружены!</b>
 
             Замен: <b>{len(substitutions)}</b>
             """,
-        )
+        ).rstrip()
 
     # endregion
 
@@ -332,7 +332,7 @@ class MenuStrings(pyquoks.providers.strings.Strings):
 
     @classmethod
     def notification_substitutions_uploaded(cls, date: datetime.datetime) -> str:
-        return f"Загружены замены на {elkollege_schedule_bot.utils.get_readable_date(date)}!"
+        return f"Загружены замены на {utils.get_readable_date(date)}!"
 
     # endregion
 

@@ -2,4 +2,4 @@ aiogram<=3.25.0
 openpyxl>=3.1.5
 pydantic>=2.12.5
 pyquoks~=2.5.0
-schedule_parser @ git+https://github.com/elkollege/ScheduleParser.git@e9485c4f9343527e4f31508c587ba628b5def1af
+schedule_parser @ git+https://github.com/elkollege/ScheduleParser.git@bd46a5539bf715c12251825e122d487967fbd94c

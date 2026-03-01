@@ -6,23 +6,26 @@ import aiogram.fsm.context
 import openpyxl
 import schedule_parser
 
-import elkollege_schedule_bot.constants
-import elkollege_schedule_bot.managers
-import elkollege_schedule_bot.models
-import elkollege_schedule_bot.providers
-import elkollege_schedule_bot.services
-import elkollege_schedule_bot.states
+from .. import constants
+from .. import models
+from .. import states
+from ..managers import config
+from ..managers import data
+from ..managers import database
+from ..providers import keyboards
+from ..providers import strings
+from ..services import logger
 
 
 class MessagesRouter(aiogram.Router):
     def __init__(
             self,
-            config_manager: elkollege_schedule_bot.managers.config.ConfigManager,
-            data_manager: elkollege_schedule_bot.managers.data.DataManager,
-            database_manager: elkollege_schedule_bot.managers.database.DatabaseManager,
-            keyboards_provider: elkollege_schedule_bot.providers.keyboards.KeyboardsProvider,
-            strings_provider: elkollege_schedule_bot.providers.strings.StringsProvider,
-            logger_service: elkollege_schedule_bot.services.logger.LoggerService,
+            config_manager: config.ConfigManager,
+            data_manager: data.DataManager,
+            database_manager: database.DatabaseManager,
+            keyboards_provider: keyboards.KeyboardsProvider,
+            strings_provider: strings.StringsProvider,
+            logger_service: logger.LoggerService,
             bot: aiogram.Bot,
     ) -> None:
         self._config = config_manager
@@ -39,11 +42,11 @@ class MessagesRouter(aiogram.Router):
 
         self.message.register(
             self.upload_schedule_handler,
-            aiogram.filters.StateFilter(elkollege_schedule_bot.states.States.upload_schedule),
+            aiogram.filters.StateFilter(states.States.upload_schedule),
         )
         self.message.register(
             self.upload_substitutions_handler,
-            aiogram.filters.StateFilter(elkollege_schedule_bot.states.States.upload_substitutions),
+            aiogram.filters.StateFilter(states.States.upload_substitutions),
         )
 
         self._logger.info(f"{self.name} initialized!")
@@ -52,7 +55,7 @@ class MessagesRouter(aiogram.Router):
 
     def _users_filter(
             self,
-            user: elkollege_schedule_bot.models.User,
+            user: models.User,
             /,
             *,
             is_notifiable: bool = None,
@@ -76,7 +79,7 @@ class MessagesRouter(aiogram.Router):
 
     async def _send_notifications(
             self,
-            users: list[elkollege_schedule_bot.models.User],
+            users: list[models.User],
             text: str,
             reply_markup: aiogram.types.InlineKeyboardMarkup,
     ) -> None:
@@ -92,7 +95,7 @@ class MessagesRouter(aiogram.Router):
                     reply_markup=reply_markup,
                 )
             except Exception as exception:
-                if type(exception) not in elkollege_schedule_bot.constants.IGNORED_EXCEPTIONS:
+                if type(exception) not in constants.IGNORED_EXCEPTIONS:
                     self._logger.log_error(exception)
 
     async def _send_schedule_uploaded_notifications(self) -> None:
@@ -182,7 +185,7 @@ class MessagesRouter(aiogram.Router):
 
                     await self._send_schedule_uploaded_notifications()
                 except Exception as exception:
-                    if type(exception) not in elkollege_schedule_bot.constants.IGNORED_EXCEPTIONS:
+                    if type(exception) not in constants.IGNORED_EXCEPTIONS:
                         self._logger.log_error(exception)
 
                     await self._bot.send_message(
@@ -252,7 +255,7 @@ class MessagesRouter(aiogram.Router):
                         date=current_date,
                     )
                 except Exception as exception:
-                    if type(exception) not in elkollege_schedule_bot.constants.IGNORED_EXCEPTIONS:
+                    if type(exception) not in constants.IGNORED_EXCEPTIONS:
                         self._logger.log_error(exception)
 
                     await self._bot.send_message(
