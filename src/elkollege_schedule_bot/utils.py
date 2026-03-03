@@ -18,9 +18,9 @@ def get_readable_date(date: datetime.datetime) -> str:
     return date.strftime(constants.DATE_FORMAT_READABLE)
 
 
-def get_callback_date(date: datetime.datetime) -> str:
-    return date.strftime(constants.DATE_FORMAT_CALLBACK)
+def get_timestamp_from_date(date: datetime.datetime) -> int:
+    return int(date.timestamp())
 
 
-def get_date_from_callback(callback: str) -> datetime.datetime:
-    return datetime.datetime.strptime(callback, constants.DATE_FORMAT_CALLBACK)
+def get_date_from_timestamp(timestamp: int) -> datetime.datetime:
+    return datetime.datetime.fromtimestamp(timestamp)

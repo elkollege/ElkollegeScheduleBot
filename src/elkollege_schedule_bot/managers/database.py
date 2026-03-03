@@ -1,11 +1,196 @@
 import pyquoks.managers.database
 import pyquoks.utils
 
+from .. import constants
 from .. import models
 
 
 class DatabaseManager(pyquoks.managers.database.DatabaseManager):
+    schedules: SchedulesDatabase
+    substitutions: SubstitutionsDatabase
     users: UsersDatabase
+
+
+class SchedulesDatabase(pyquoks.managers.database.Database):
+    _NAME = "schedules"
+
+    _SQL = pyquoks.utils.format_multiline_string(
+        f"""
+            CREATE TABLE IF NOT EXISTS {_NAME} (
+            id INTEGER PRIMARY KEY NOT NULL,
+            building_id INTEGER NOT NULL,
+            json TEXT NOT NULL
+            )
+        """,
+    )
+
+    def add_schedules(self, json: str) -> None:
+        cursor = self.cursor()
+
+        cursor.execute(
+            pyquoks.utils.format_multiline_string(
+                f"""
+                    INSERT INTO {self._NAME} (
+                    building_id,
+                    json
+                    )
+                    VALUES (?, ?)
+                """,
+            ),
+            (
+                constants.TEMP_BUILDING_ID,
+                json,
+            ),
+        )
+
+        self.commit()
+
+    def get_schedules(self) -> models.DatabaseSchedules | None:
+        cursor = self.cursor()
+
+        cursor.execute(
+            pyquoks.utils.format_multiline_string(
+                f"""
+                    SELECT * FROM {self._NAME} WHERE building_id = ?
+                """,
+            ),
+            (
+                constants.TEMP_BUILDING_ID,
+            ),
+        )
+        result = cursor.fetchone()
+
+        if result:
+            return models.DatabaseSchedules.model_validate(dict(result))
+        else:
+            return None
+
+    def edit_json(self, json: str) -> None:
+        cursor = self.cursor()
+
+        cursor.execute(
+            pyquoks.utils.format_multiline_string(
+                f"""
+                    UPDATE {self._NAME} SET json = ? WHERE building_id = ?
+                """,
+            ),
+            (
+                json,
+                constants.TEMP_BUILDING_ID,
+            ),
+        )
+
+        self.commit()
+
+    def delete_schedules(self) -> None:
+        cursor = self.cursor()
+
+        cursor.execute(
+            pyquoks.utils.format_multiline_string(
+                f"""
+                    DELETE FROM {self._NAME} WHERE building_id = ?
+                """,
+            ),
+            (
+                constants.TEMP_BUILDING_ID,
+            ),
+        )
+
+        self.commit()
+
+
+class SubstitutionsDatabase(pyquoks.managers.database.Database):
+    _NAME = "substitutions"
+
+    _SQL = pyquoks.utils.format_multiline_string(
+        f"""
+            CREATE TABLE IF NOT EXISTS {_NAME} (
+            id INTEGER PRIMARY KEY NOT NULL,
+            building_id INTEGER NOT NULL,
+            timestamp INTEGER NOT NULL,
+            json TEXT NOT NULL
+            )
+        """,
+    )
+
+    def add_substitutions(self, timestamp: int, json: str) -> None:
+        cursor = self.cursor()
+
+        cursor.execute(
+            pyquoks.utils.format_multiline_string(
+                f"""
+                    INSERT INTO {self._NAME} (
+                    building_id,
+                    timestamp,
+                    json
+                    )
+                    VALUES (?, ?, ?)
+                """,
+            ),
+            (
+                constants.TEMP_BUILDING_ID,
+                timestamp,
+                json,
+            ),
+        )
+
+        self.commit()
+
+    def get_substitutions(self, timestamp: int) -> models.DatabaseSubstitutions | None:
+        cursor = self.cursor()
+
+        cursor.execute(
+            pyquoks.utils.format_multiline_string(
+                f"""
+                    SELECT * FROM {self._NAME} WHERE building_id = ? AND timestamp = ?
+                """,
+            ),
+            (
+                constants.TEMP_BUILDING_ID,
+                timestamp,
+            ),
+        )
+        result = cursor.fetchone()
+
+        if result:
+            return models.DatabaseSubstitutions.model_validate(dict(result))
+        else:
+            return None
+
+    def edit_json(self, timestamp: int, json: str) -> None:
+        cursor = self.cursor()
+
+        cursor.execute(
+            pyquoks.utils.format_multiline_string(
+                f"""
+                    UPDATE {self._NAME} SET json = ? WHERE building_id = ? AND timestamp = ?
+                """,
+            ),
+            (
+                json,
+                constants.TEMP_BUILDING_ID,
+                timestamp,
+            ),
+        )
+
+        self.commit()
+
+    def delete_substitutions(self, timestamp: int) -> None:
+        cursor = self.cursor()
+
+        cursor.execute(
+            pyquoks.utils.format_multiline_string(
+                f"""
+                    DELETE FROM {self._NAME} WHERE building_id = ? AND timestamp = ?
+                """,
+            ),
+            (
+                constants.TEMP_BUILDING_ID,
+                timestamp,
+            ),
+        )
+
+        self.commit()
 
 
 class UsersDatabase(pyquoks.managers.database.Database):
@@ -21,7 +206,7 @@ class UsersDatabase(pyquoks.managers.database.Database):
         """,
     )
 
-    def add_user(self, user: models.User) -> None:
+    def add_user(self, _id: int, group_name: str, is_notifiable: bool) -> None:
         cursor = self.cursor()
 
         cursor.execute(
@@ -36,35 +221,35 @@ class UsersDatabase(pyquoks.managers.database.Database):
                 """,
             ),
             (
-                user.id,
-                user.group_name,
-                user.is_notifiable,
+                _id,
+                group_name,
+                is_notifiable,
             ),
         )
 
         self.commit()
 
-    def get_user(self, user_id: int) -> models.User | None:
+    def get_user(self, _id: int) -> models.DatabaseUser | None:
         cursor = self.cursor()
 
         cursor.execute(
             pyquoks.utils.format_multiline_string(
                 f"""
-                SELECT * FROM {self._NAME} WHERE id = ?
+                    SELECT * FROM {self._NAME} WHERE id = ?
                 """,
             ),
             (
-                user_id,
+                _id,
             ),
         )
         result = cursor.fetchone()
 
         if result:
-            return models.User.model_validate(dict(result))
+            return models.DatabaseUser.model_validate(dict(result))
         else:
             return None
 
-    def get_users(self) -> list[models.User]:
+    def get_users_list(self) -> list[models.DatabaseUser]:
         cursor = self.cursor()
 
         cursor.execute(
@@ -76,9 +261,9 @@ class UsersDatabase(pyquoks.managers.database.Database):
         )
         results = cursor.fetchall()
 
-        return [models.User.model_validate(dict(result)) for result in results]
+        return [models.DatabaseUser.model_validate(dict(result)) for result in results]
 
-    def edit_group_name(self, user_id: int, group_name: str) -> None:
+    def edit_group_name(self, _id: int, group_name: str) -> None:
         cursor = self.cursor()
 
         cursor.execute(
@@ -89,13 +274,13 @@ class UsersDatabase(pyquoks.managers.database.Database):
             ),
             (
                 group_name,
-                user_id,
+                _id,
             ),
         )
 
         self.commit()
 
-    def edit_is_notifiable(self, user_id: int, is_notifiable: bool) -> None:
+    def edit_is_notifiable(self, _id: int, is_notifiable: bool) -> None:
         cursor = self.cursor()
 
         cursor.execute(
@@ -106,17 +291,17 @@ class UsersDatabase(pyquoks.managers.database.Database):
             ),
             (
                 is_notifiable,
-                user_id,
+                _id,
             ),
         )
 
         self.commit()
 
-    def _edit_setting(self, user_id: int, setting: str, value: bool) -> None:
+    def _edit_setting(self, _id: int, setting: str, value: bool) -> None:
         edit_callable = getattr(self, f"edit_{setting}", None)
 
         if edit_callable:
-            return edit_callable(user_id, value)
+            return edit_callable(_id, value)
         else:
             raise AttributeError(
                 name=setting,

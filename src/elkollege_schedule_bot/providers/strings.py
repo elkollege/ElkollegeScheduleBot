@@ -203,7 +203,7 @@ class MenuStrings(pyquoks.providers.strings.Strings):
         )
 
     @classmethod
-    def settings(cls, user: models.User) -> str:
+    def settings(cls, user: models.DatabaseUser) -> str:
         user_id_status = f"User ID: <b>{user.id}</b>"
         group_name_status = f"Группа: <b>{user.group_name}</b>" if user.group_name else None
 

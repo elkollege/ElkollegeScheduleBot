@@ -125,7 +125,7 @@ class KeyboardsProvider:
 
         return markup_builder.as_markup()
 
-    def settings(self, user: models.User) -> aiogram.types.InlineKeyboardMarkup:
+    def settings(self, user: models.DatabaseUser) -> aiogram.types.InlineKeyboardMarkup:
         markup_builder = aiogram.utils.keyboard.InlineKeyboardBuilder()
         markup_builder.row(
             *[

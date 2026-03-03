@@ -24,13 +24,13 @@ class ButtonsProvider:
     def schedule(date: datetime.datetime) -> aiogram.types.InlineKeyboardButton:
         return aiogram.types.InlineKeyboardButton(
             text=utils.get_readable_date(date),
-            callback_data=f"schedule {utils.get_callback_date(date)}",
+            callback_data=f"schedule {utils.get_timestamp_from_date(date)}",
         )
 
     def schedule_readable(self, date: datetime.datetime) -> aiogram.types.InlineKeyboardButton:
         return aiogram.types.InlineKeyboardButton(
             text=self._strings.button.view_schedules(),
-            callback_data=f"schedule {utils.get_callback_date(date)}",
+            callback_data=f"schedule {utils.get_timestamp_from_date(date)}",
         )
 
     def view_groups(self) -> aiogram.types.InlineKeyboardButton:
@@ -93,19 +93,19 @@ class ButtonsProvider:
     def manage_substitutions(date: datetime.datetime) -> aiogram.types.InlineKeyboardButton:
         return aiogram.types.InlineKeyboardButton(
             text=utils.get_readable_date(date),
-            callback_data=f"manage_substitutions {utils.get_callback_date(date)}",
+            callback_data=f"manage_substitutions {utils.get_timestamp_from_date(date)}",
         )
 
     def upload_substitutions(self, date: datetime.datetime) -> aiogram.types.InlineKeyboardButton:
         return aiogram.types.InlineKeyboardButton(
             text=self._strings.button.upload(),
-            callback_data=f"upload_substitutions {utils.get_callback_date(date)}",
+            callback_data=f"upload_substitutions {utils.get_timestamp_from_date(date)}",
         )
 
     def delete_substitutions(self, date: datetime.datetime) -> aiogram.types.InlineKeyboardButton:
         return aiogram.types.InlineKeyboardButton(
             text=self._strings.button.delete(),
-            callback_data=f"delete_substitutions {utils.get_callback_date(date)}",
+            callback_data=f"delete_substitutions {utils.get_timestamp_from_date(date)}",
         )
 
     def export_logs(self) -> aiogram.types.InlineKeyboardButton:
@@ -151,7 +151,7 @@ class ButtonsProvider:
     def back_to_manage_substitutions(self, date: datetime.datetime) -> aiogram.types.InlineKeyboardButton:
         return aiogram.types.InlineKeyboardButton(
             text=self._strings.button.back(),
-            callback_data=f"manage_substitutions {utils.get_callback_date(date)}",
+            callback_data=f"manage_substitutions {utils.get_timestamp_from_date(date)}",
         )
 
     def cancel_to_manage_schedule(self) -> aiogram.types.InlineKeyboardButton:
@@ -163,7 +163,7 @@ class ButtonsProvider:
     def cancel_to_manage_substitutions(self, date: datetime.datetime) -> aiogram.types.InlineKeyboardButton:
         return aiogram.types.InlineKeyboardButton(
             text=self._strings.button.cancel(),
-            callback_data=f"manage_substitutions {utils.get_callback_date(date)}",
+            callback_data=f"manage_substitutions {utils.get_timestamp_from_date(date)}",
         )
 
     # endregion

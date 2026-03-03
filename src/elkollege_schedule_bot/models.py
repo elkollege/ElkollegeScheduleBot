@@ -3,7 +3,20 @@ import pydantic
 
 # region Models
 
-class User(pydantic.BaseModel):
+class DatabaseSchedules(pydantic.BaseModel):
+    id: int
+    building_id: int
+    json: str
+
+
+class DatabaseSubstitutions(pydantic.BaseModel):
+    id: int
+    building_id: int
+    timestamp: int
+    json: str
+
+
+class DatabaseUser(pydantic.BaseModel):
     id: int
     group_name: str
     is_notifiable: bool
