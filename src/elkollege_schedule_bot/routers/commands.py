@@ -1,6 +1,9 @@
 import aiogram
 import aiogram.filters
+import pyquoks.utils
 
+from .. import models
+from .. import utils
 from ..managers import config
 from ..managers import database
 from ..providers import keyboards
@@ -48,13 +51,48 @@ class CommandsRouter(aiogram.Router):
             message: aiogram.types.Message,
             command: aiogram.filters.CommandObject,
     ) -> None:
-        ...  # TODO
+        self._logger.log_user_interaction(
+            user=message.from_user,
+            interaction=command.text,
+        )
+
+        self._database.users.add_user(
+            _id=message.from_user.id,
+            **models.DatabaseUser._default_values(),
+        )
+
+        await self._bot.send_message(
+            chat_id=message.chat.id,
+            message_thread_id=utils.get_message_thread_id(message),
+            text=self._strings.menu.start(
+                user=message.from_user,
+            ),
+            reply_markup=self._keyboards.start(),
+        )
 
     async def _admin_handler(
             self,
             message: aiogram.types.Message,
             command: aiogram.filters.CommandObject,
     ) -> None:
-        ...  # TODO
+        is_admin = message.from_user.id in self._config.settings.admins_list
+
+        self._logger.log_user_interaction(
+            user=message.from_user,
+            interaction=f"{command.text} ({is_admin=})",
+        )
+
+        if not is_admin:
+            return
+
+        await self._bot.send_message(
+            chat_id=message.chat.id,
+            message_thread_id=utils.get_message_thread_id(message),
+            text=self._strings.menu.admin(
+                user=message.from_user,
+                date_started=pyquoks.utils.get_process_created_datetime(),
+            ),
+            reply_markup=self._keyboards.admin(),
+        )
 
     # endregion

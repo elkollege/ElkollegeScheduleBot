@@ -1,7 +1,6 @@
 import aiogram.exceptions
 
-# TODO: implement academic buildings support
-TEMP_BUILDING_ID = 1
+TEMP_BUILDING_ID = 1  # TODO: implement academic buildings support
 
 FIRST_PAGE = 1
 GROUPS_PER_PAGE = 5
