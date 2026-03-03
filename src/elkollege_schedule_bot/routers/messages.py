@@ -1,4 +1,5 @@
 import datetime
+import typing
 
 import aiogram
 import aiogram.filters
@@ -139,14 +140,14 @@ class MessagesRouter(aiogram.Router):
             self,
             message: aiogram.types.Message,
             state: aiogram.fsm.context.FSMContext,
-    ) -> None:
+    ) -> typing.Any:
         ...  # TODO
 
     async def _upload_substitutions_handler(
             self,
             message: aiogram.types.Message,
             state: aiogram.fsm.context.FSMContext,
-    ) -> None:
+    ) -> typing.Any:
         ...  # TODO
 
     # endregion

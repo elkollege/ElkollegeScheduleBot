@@ -1,3 +1,5 @@
+import typing
+
 import aiogram
 import aiogram.fsm.context
 
@@ -41,7 +43,7 @@ class CallbacksRouter(aiogram.Router):
             self,
             call: aiogram.types.CallbackQuery,
             state: aiogram.fsm.context.FSMContext,
-    ) -> None:
+    ) -> typing.Any:
         ...  # TODO
 
     # endregion

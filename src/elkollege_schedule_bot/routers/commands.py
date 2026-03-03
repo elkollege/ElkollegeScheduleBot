@@ -1,3 +1,5 @@
+import typing
+
 import aiogram
 import aiogram.filters
 import pyquoks.utils
@@ -50,7 +52,7 @@ class CommandsRouter(aiogram.Router):
             self,
             message: aiogram.types.Message,
             command: aiogram.filters.CommandObject,
-    ) -> None:
+    ) -> typing.Any:
         self._logger.log_user_interaction(
             user=message.from_user,
             interaction=command.text,
@@ -74,7 +76,7 @@ class CommandsRouter(aiogram.Router):
             self,
             message: aiogram.types.Message,
             command: aiogram.filters.CommandObject,
-    ) -> None:
+    ) -> typing.Any:
         is_admin = message.from_user.id in self._config.settings.admins_list
 
         self._logger.log_user_interaction(
