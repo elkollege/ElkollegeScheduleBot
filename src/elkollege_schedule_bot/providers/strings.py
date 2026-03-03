@@ -69,7 +69,7 @@ class ButtonStrings(pyquoks.providers.strings.Strings):
     # region /start
 
     @classmethod
-    def view_schedules(cls) -> str:
+    def view_schedule(cls) -> str:
         return "Просмотр расписания"
 
     @classmethod
@@ -146,14 +146,15 @@ class MenuStrings(pyquoks.providers.strings.Strings):
     @classmethod
     def start(cls, user: aiogram.types.User) -> str:
         return pyquoks.utils.format_multiline_string(
-            f"""
-                <b>Привет, {user.full_name}!</b>
+            """
+                <b>Привет, {0}!</b>
                 
                 Здесь вы можете просмотреть
                 актуальное расписание
                 Электростальского колледжа
                 для вашей учебной группы.
             """,
+            user.full_name,
         )
 
     @classmethod
@@ -173,23 +174,18 @@ class MenuStrings(pyquoks.providers.strings.Strings):
             schedule: list[schedule_parser.models.Period],
             has_substitutions: bool,
     ) -> str:
-        formatted_date = utils.get_readable_date(date)
-
-        readable_schedule = "\n".join(period.readable for period in schedule) if schedule else "ℹ️ Пары отсутствуют"
-        substitutions_status = "ℹ️ Замены не загружены" if not has_substitutions else None
-
-        formatted_status = "\n".join(i for i in [
-            readable_schedule,
-            substitutions_status,
-        ] if i)
-
         return pyquoks.utils.format_multiline_string(
             """
                 <b>Расписание на {0}</b>
                 
                 {1}
             """,
-        ).format(formatted_date, formatted_status)
+            utils.get_readable_date(date),
+            "\n".join(i for i in [
+                "\n".join(period.readable for period in schedule) if schedule else "ℹ️ Пары отсутствуют",
+                "ℹ️ Замены не загружены" if not has_substitutions else None,
+            ] if i),
+        )
 
     @classmethod
     def view_groups(cls) -> str:
@@ -204,21 +200,17 @@ class MenuStrings(pyquoks.providers.strings.Strings):
 
     @classmethod
     def settings(cls, user: models.DatabaseUser) -> str:
-        user_id_status = f"User ID: <b>{user.id}</b>"
-        group_name_status = f"Группа: <b>{user.group_name}</b>" if user.group_name else None
-
-        formatted_status = "\n".join(i for i in [
-            user_id_status,
-            group_name_status,
-        ] if i)
-
         return pyquoks.utils.format_multiline_string(
             """
                 <b>Настройки</b>
                 
                 {0}
             """,
-        ).format(formatted_status)
+            "\n".join(i for i in [
+                f"User ID: <b>{user.id}</b>",
+                f"Группа: <b>{user.group_name}</b>" if user.group_name else None,
+            ] if i),
+        )
 
     # endregion
 
@@ -226,50 +218,47 @@ class MenuStrings(pyquoks.providers.strings.Strings):
 
     @classmethod
     def admin(cls, user: aiogram.types.User, date_started: datetime.datetime) -> str:
-        formatted_date_started = date_started.astimezone(datetime.UTC).strftime(constants.DATE_FORMAT_STARTED)
-
         return pyquoks.utils.format_multiline_string(
-            f"""
+            """
                 <b>Меню администратора</b>
                 
-                Добро пожаловать, {user.full_name}!
+                Добро пожаловать, {0}!
                 
-                Дата запуска: <b>{formatted_date_started} UTC</b>
+                Дата запуска: <b>{1} UTC</b>
             """,
+            user.full_name,
+            date_started.astimezone(datetime.UTC).strftime(constants.DATE_FORMAT_STARTED),
         )
 
     @classmethod
     def manage_schedule(cls, schedule: list[schedule_parser.models.GroupSchedule]) -> str:
-        schedule_status = f"Статус расписания: <b>{"Загружено" if schedule else "Отсутствует"}</b>"
-        schedule_groups_count_status = f"Учебных групп: <b>{len(schedule)}</b>" if schedule else None
-
-        formatted_status = "\n".join(i for i in [
-            schedule_status,
-            schedule_groups_count_status,
-        ] if i)
-
         return pyquoks.utils.format_multiline_string(
             """
                 <b>Управление расписанием</b>
                 
                 {0}
             """,
-        ).format(formatted_status)
+            "\n".join(i for i in [
+                f"Статус расписания: <b>{"Загружено" if schedule else "Отсутствует"}</b>",
+                f"Учебных групп: <b>{len(schedule)}</b>" if schedule else None,
+            ] if i),
+        )
 
     @classmethod
     def upload_schedule(cls, workbook_extension: str) -> str:
         return pyquoks.utils.format_multiline_string(
-            f"""
+            """
                 <b>Загрузка расписания</b>
                 
-                Отправьте файл с расширением <b>\".{workbook_extension}\"</b>:
+                Отправьте файл с расширением <b>\".{0}\"</b>:
             """,
+            workbook_extension,
         )
 
     @classmethod
     def upload_schedule_error(cls) -> str:
         return pyquoks.utils.format_multiline_string(
-            f"""
+            """
                 <b>Возникла ошибка!</b>
                 
                 Не удалось обработать расписание.
@@ -279,11 +268,12 @@ class MenuStrings(pyquoks.providers.strings.Strings):
     @classmethod
     def upload_schedule_success(cls, schedule: list[schedule_parser.models.GroupSchedule]) -> str:
         return pyquoks.utils.format_multiline_string(
-            f"""
+            """
                 <b>Расписание загружено!</b>
                 
-                Учебных групп: <b>{len(schedule)}</b>
+                Учебных групп: <b>{0}</b>
             """,
+            len(schedule),
         )
 
     @classmethod
@@ -302,40 +292,35 @@ class MenuStrings(pyquoks.providers.strings.Strings):
             date: datetime.datetime,
             substitutions: list[schedule_parser.models.Substitution],
     ) -> str:
-        formatted_date = utils.get_readable_date(date)
-
-        substitutions_status = f"Статус замен: <b>{"Загружены" if substitutions else "Отсутствуют"}</b>"
-        substitutions_count_status = f"Замен: <b>{len(substitutions)}</b>" if substitutions else None
-
-        formatted_status = "\n".join(i for i in [
-            substitutions_status,
-            substitutions_count_status,
-        ] if i)
-
         return pyquoks.utils.format_multiline_string(
             """
                 <b>Управление заменами на {0}</b>
                 
                 {1}
             """,
-        ).format(formatted_date, formatted_status)
+            utils.get_readable_date(date),
+            "\n".join(i for i in [
+                f"Статус замен: <b>{"Загружены" if substitutions else "Отсутствуют"}</b>",
+                f"Замен: <b>{len(substitutions)}</b>" if substitutions else None,
+            ] if i),
+        )
 
     @classmethod
     def upload_substitutions(cls, date: datetime.datetime, workbook_extension: str) -> str:
-        formatted_date = utils.get_readable_date(date)
-
         return pyquoks.utils.format_multiline_string(
-            f"""
-                <b>Загрузка замен на {formatted_date}</b>
+            """
+                <b>Загрузка замен на {0}</b>
                 
-                Отправьте файл с расширением <b>\".{workbook_extension}\"</b>:
+                Отправьте файл с расширением <b>\".{1}\"</b>:
             """,
+            utils.get_readable_date(date),
+            workbook_extension,
         )
 
     @classmethod
     def upload_substitutions_error(cls) -> str:
         return pyquoks.utils.format_multiline_string(
-            f"""
+            """
                 <b>Возникла ошибка!</b>
                 
                 Не удалось обработать замены.
@@ -348,14 +333,14 @@ class MenuStrings(pyquoks.providers.strings.Strings):
             date: datetime.datetime,
             substitutions: list[schedule_parser.models.Substitution],
     ) -> str:
-        formatted_date = utils.get_readable_date(date)
-
         return pyquoks.utils.format_multiline_string(
-            f"""
-                <b>Замены на {formatted_date} загружены!</b>
+            """
+                <b>Замены на {0} загружены!</b>
                 
-                Замен: <b>{len(substitutions)}</b>
+                Замен: <b>{1}</b>
             """,
+            utils.get_readable_date(date),
+            len(substitutions),
         )
 
     # endregion
@@ -372,12 +357,11 @@ class MenuStrings(pyquoks.providers.strings.Strings):
 
     @classmethod
     def notification_substitutions_uploaded(cls, date: datetime.datetime) -> str:
-        formatted_date = utils.get_readable_date(date)
-
         return pyquoks.utils.format_multiline_string(
-            f"""
-                <b>Загружены замены на {formatted_date}!</b>
+            """
+                <b>Загружены замены на {0}!</b>
             """,
+            utils.get_readable_date(date),
         )
 
     # endregion
@@ -392,10 +376,10 @@ class SettingsStrings(pyquoks.providers.strings.Strings):
     def _get_setting_string(cls, setting: str) -> str:
         string_callable = getattr(cls, setting, None)
 
-        if string_callable:
-            return string_callable()
-        else:
+        if not string_callable:
             raise AttributeError(
                 name=setting,
                 obj=cls,
             )
+
+        return string_callable()

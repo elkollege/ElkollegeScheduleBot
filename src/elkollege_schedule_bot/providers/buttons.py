@@ -1,7 +1,6 @@
 import datetime
 
 import aiogram
-import schedule_parser.models
 
 from . import strings
 from .. import constants
@@ -16,20 +15,20 @@ class ButtonsProvider:
 
     def view_schedules(self) -> aiogram.types.InlineKeyboardButton:
         return aiogram.types.InlineKeyboardButton(
-            text=self._strings.button.view_schedules(),
+            text=self._strings.button.view_schedule(),
             callback_data="view_schedules",
+        )
+
+    def view_schedule(self, date: datetime.datetime) -> aiogram.types.InlineKeyboardButton:
+        return aiogram.types.InlineKeyboardButton(
+            text=self._strings.button.view_schedule(),
+            callback_data=f"schedule {utils.get_timestamp_from_date(date)}",
         )
 
     @staticmethod
     def schedule(date: datetime.datetime) -> aiogram.types.InlineKeyboardButton:
         return aiogram.types.InlineKeyboardButton(
             text=utils.get_readable_date(date),
-            callback_data=f"schedule {utils.get_timestamp_from_date(date)}",
-        )
-
-    def schedule_readable(self, date: datetime.datetime) -> aiogram.types.InlineKeyboardButton:
-        return aiogram.types.InlineKeyboardButton(
-            text=self._strings.button.view_schedules(),
             callback_data=f"schedule {utils.get_timestamp_from_date(date)}",
         )
 
@@ -40,10 +39,10 @@ class ButtonsProvider:
         )
 
     @staticmethod
-    def group(group: schedule_parser.models.GroupSchedule) -> aiogram.types.InlineKeyboardButton:
+    def group(group_name: str) -> aiogram.types.InlineKeyboardButton:
         return aiogram.types.InlineKeyboardButton(
-            text=group.group_name,
-            callback_data=f"group {group.group_name}",
+            text=group_name,
+            callback_data=f"group {group_name}",
         )
 
     def settings(self) -> aiogram.types.InlineKeyboardButton:
@@ -170,7 +169,11 @@ class ButtonsProvider:
 
     # region page_*
 
-    def page_previous(self, callback_data: str, is_answer_callback: bool) -> aiogram.types.InlineKeyboardButton:
+    def page_previous(
+            self,
+            callback_data: str,
+            is_answer_callback: bool,
+    ) -> aiogram.types.InlineKeyboardButton:
         return aiogram.types.InlineKeyboardButton(
             text=self._strings.button.page_previous(),
             callback_data="answer_callback" if is_answer_callback else callback_data,
@@ -191,7 +194,11 @@ class ButtonsProvider:
             callback_data="answer_callback" if is_answer_callback else callback_data,
         )
 
-    def page_next(self, callback_data: str, is_answer_callback: bool) -> aiogram.types.InlineKeyboardButton:
+    def page_next(
+            self,
+            callback_data: str,
+            is_answer_callback: bool,
+    ) -> aiogram.types.InlineKeyboardButton:
         return aiogram.types.InlineKeyboardButton(
             text=self._strings.button.page_next(),
             callback_data="answer_callback" if is_answer_callback else callback_data,

@@ -102,7 +102,7 @@ class KeyboardsProvider:
         markup_builder = aiogram.utils.keyboard.InlineKeyboardBuilder()
         markup_builder.row(
             *[
-                self._buttons.group(group) for group in list(
+                self._buttons.group(group.group_name) for group in list(
                     itertools.batched(
                         groups,
                         constants.GROUPS_PER_PAGE,
@@ -248,7 +248,7 @@ class KeyboardsProvider:
     def notification_substitutions_uploaded(self, date: datetime.datetime) -> aiogram.types.InlineKeyboardMarkup:
         markup_builder = aiogram.utils.keyboard.InlineKeyboardBuilder()
         markup_builder.row(
-            self._buttons.schedule_readable(date),
+            self._buttons.view_schedule(date),
         )
 
         return markup_builder.as_markup()

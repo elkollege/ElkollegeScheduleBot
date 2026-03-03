@@ -300,10 +300,10 @@ class UsersDatabase(pyquoks.managers.database.Database):
     def _edit_setting(self, _id: int, setting: str, value: bool) -> None:
         edit_callable = getattr(self, f"edit_{setting}", None)
 
-        if edit_callable:
-            return edit_callable(_id, value)
-        else:
+        if not edit_callable:
             raise AttributeError(
                 name=setting,
                 obj=self,
             )
+
+        return edit_callable(_id, value)

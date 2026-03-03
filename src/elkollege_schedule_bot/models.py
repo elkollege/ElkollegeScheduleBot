@@ -15,8 +15,8 @@ class DatabaseSchedule(pydantic.BaseModel):
     def groups_list(self) -> list[schedule_parser.models.GroupSchedule]:
         return [
             schedule_parser.models.GroupSchedule.model_validate(
-                schedule,
-            ) for schedule in json.loads(self.json_string)
+                group_schedule,
+            ) for group_schedule in json.loads(self.json_string)
         ]
 
     def get_group_schedule_by_group_name(self, group_name: str) -> schedule_parser.models.GroupSchedule:
