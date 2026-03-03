@@ -7,6 +7,7 @@ from .providers import keyboards
 from .providers import strings
 from .routers import callbacks
 from .routers import commands
+from .routers import messages
 from .services import logger
 
 
@@ -67,7 +68,14 @@ class AiogramDispatcher(aiogram.Dispatcher):
                 logger_service=logger_service,
                 aiogram_bot=aiogram_bot,
             ),
-            # TODO: messages
+            messages.MessagesRouter(
+                config_manager=config_manager,
+                database_manager=database_manager,
+                keyboards_provider=keyboards_provider,
+                strings_provider=strings_provider,
+                logger_service=logger_service,
+                aiogram_bot=aiogram_bot,
+            ),
         )
 
         self._logger.info(f"{self.name} initialized!")

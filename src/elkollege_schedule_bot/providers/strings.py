@@ -184,12 +184,12 @@ class MenuStrings(pyquoks.providers.strings.Strings):
         ] if i)
 
         return pyquoks.utils.format_multiline_string(
-            f"""
-                <b>Расписание на {formatted_date}</b>
+            """
+                <b>Расписание на {0}</b>
                 
-                {formatted_status}
+                {1}
             """,
-        )
+        ).format(formatted_date, formatted_status)
 
     @classmethod
     def view_groups(cls) -> str:
@@ -213,12 +213,12 @@ class MenuStrings(pyquoks.providers.strings.Strings):
         ] if i)
 
         return pyquoks.utils.format_multiline_string(
-            f"""
+            """
                 <b>Настройки</b>
                 
-                {formatted_status}
+                {0}
             """,
-        )
+        ).format(formatted_status)
 
     # endregion
 
@@ -249,12 +249,12 @@ class MenuStrings(pyquoks.providers.strings.Strings):
         ] if i)
 
         return pyquoks.utils.format_multiline_string(
-            f"""
+            """
                 <b>Управление расписанием</b>
                 
-                {formatted_status}
+                {0}
             """,
-        )
+        ).format(formatted_status)
 
     @classmethod
     def upload_schedule(cls, workbook_extension: str) -> str:
@@ -313,12 +313,12 @@ class MenuStrings(pyquoks.providers.strings.Strings):
         ] if i)
 
         return pyquoks.utils.format_multiline_string(
-            f"""
-                <b>Управление заменами на {formatted_date}</b>
+            """
+                <b>Управление заменами на {0}</b>
                 
-                {formatted_status}
+                {1}
             """,
-        )
+        ).format(formatted_date, formatted_status)
 
     @classmethod
     def upload_substitutions(cls, date: datetime.datetime, workbook_extension: str) -> str:

@@ -5,6 +5,7 @@ import schedule_parser.models
 
 from .. import constants
 from .. import models
+from .. import states
 from .. import utils
 from ..managers import config
 from ..managers import database
@@ -46,7 +47,7 @@ class CallbacksRouter(aiogram.Router):
             self,
             call: aiogram.types.CallbackQuery,
             state: aiogram.fsm.context.FSMContext,
-    ):
+    ) -> bool | None:
         is_admin = call.from_user.id in self._config.settings.admins_list
 
         self._logger.log_user_interaction(
@@ -243,9 +244,9 @@ class CallbacksRouter(aiogram.Router):
                         chat_id=call.message.chat.id,
                         message_id=call.message.message_id,
                         text=self._strings.menu.manage_schedule(
-                            schedule=current_schedule.groups_list,
+                            schedule=current_schedule.groups_list if current_schedule else [],
                         ),
-                        reply_markup=self._keyboards.admin(),
+                        reply_markup=self._keyboards.manage_schedule(),
                     )
                 case ["upload_schedule"] if is_admin:
                     await self._bot.edit_message_text(
@@ -256,6 +257,8 @@ class CallbacksRouter(aiogram.Router):
                         ),
                         reply_markup=self._keyboards.upload_schedule(),
                     )
+
+                    await state.set_state(states.upload_substitutions)
                 case ["delete_schedule"] if is_admin:
                     current_schedule = self._database.schedules.get_schedule()
 
@@ -276,7 +279,7 @@ class CallbacksRouter(aiogram.Router):
                         text=self._strings.menu.manage_schedule(
                             schedule=current_schedule.groups_list,
                         ),
-                        reply_markup=self._keyboards.admin(),
+                        reply_markup=self._keyboards.manage_schedule(),
                     )
 
                     await self._bot.answer_callback_query(
@@ -324,6 +327,13 @@ class CallbacksRouter(aiogram.Router):
                         reply_markup=self._keyboards.upload_substitutions(
                             date=current_date,
                         ),
+                    )
+
+                    await state.set_state(states.upload_substitutions)
+                    await state.set_data(
+                        data={
+                            "current_date": current_date,
+                        },
                     )
                 case ["delete_substitutions", current_timestamp] if is_admin:
                     current_timestamp = int(current_timestamp)
