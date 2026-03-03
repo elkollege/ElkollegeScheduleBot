@@ -1,13 +1,17 @@
 import datetime
+import json
 import typing
 
 import aiogram
 import aiogram.filters
 import aiogram.fsm.context
+import openpyxl
+import schedule_parser.utils
 
 from .. import constants
 from .. import models
 from .. import states
+from .. import utils
 from ..managers import config
 from ..managers import database
 from ..providers import keyboards
@@ -141,13 +145,164 @@ class MessagesRouter(aiogram.Router):
             message: aiogram.types.Message,
             state: aiogram.fsm.context.FSMContext,
     ) -> typing.Any:
-        ...  # TODO
+        has_file = bool(message.document)
+
+        self._logger.log_user_interaction(
+            user=message.from_user,
+            interaction=f"{self._upload_schedule_handler.__name__} ({has_file=})",
+        )
+
+        if not has_file:
+            return await self._bot.send_message(
+                chat_id=message.chat.id,
+                message_thread_id=utils.get_message_thread_id(message),
+                text=self._strings.menu.upload_schedule_error(),
+                reply_markup=self._keyboards.upload_schedule_completed(),
+            )
+
+        with await self._bot.download_file(
+                file_path=(
+                        await self._bot.get_file(
+                            file_id=message.document.file_id,
+                        )
+                ).file_path
+        ) as file:
+            try:
+                workbook = openpyxl.load_workbook(file)
+
+                current_database_schedule = self._database.schedules.get_schedule()
+
+                parsed_schedule = schedule_parser.utils.parse_schedule(
+                    worksheet=workbook.worksheets[0],
+                )
+
+                parsed_schedule_json_string = json.dumps(
+                    group_schedule.model_dump() for group_schedule in parsed_schedule
+                )
+
+                if current_database_schedule:
+                    self._database.schedules.edit_json_string(
+                        json_string=parsed_schedule_json_string,
+                    )
+                else:
+                    self._database.schedules.add_schedule(
+                        json_string=parsed_schedule_json_string,
+                    )
+
+                current_database_schedule = self._database.schedules.get_schedule()
+
+                await self._bot.send_message(
+                    chat_id=message.chat.id,
+                    message_thread_id=utils.get_message_thread_id(message),
+                    text=self._strings.menu.upload_schedule_success(
+                        schedule=current_database_schedule,
+                    ),
+                    reply_markup=self._keyboards.upload_schedule_completed(),
+                )
+
+                await self._send_schedule_uploaded_notifications()
+            except Exception as exception:
+                if type(exception) not in constants.IGNORED_EXCEPTIONS:
+                    self._logger.log_exception(exception)
+
+                await self._bot.send_message(
+                    chat_id=message.chat.id,
+                    message_thread_id=utils.get_message_thread_id(message),
+                    text=self._strings.menu.upload_schedule_error(),
+                    reply_markup=self._keyboards.upload_schedule_completed(),
+                )
+            finally:
+                await state.clear()
 
     async def _upload_substitutions_handler(
             self,
             message: aiogram.types.Message,
             state: aiogram.fsm.context.FSMContext,
     ) -> typing.Any:
-        ...  # TODO
+        current_timestamp = (await state.get_data())["current_timestamp"]
+        current_date = utils.get_date_from_timestamp(current_timestamp)
+        has_file = bool(message.document)
+
+        self._logger.log_user_interaction(
+            user=message.from_user,
+            interaction=f"{self._upload_substitutions_handler.__name__} ({has_file=}, {current_timestamp=})",
+        )
+
+        if not has_file:
+            return await self._bot.send_message(
+                chat_id=message.chat.id,
+                message_thread_id=utils.get_message_thread_id(message),
+                text=self._strings.menu.upload_substitutions_error(),
+                reply_markup=self._keyboards.upload_substitutions_completed(
+                    date=current_date,
+                ),
+            )
+
+        with await self._bot.download_file(
+                file_path=(
+                        await self._bot.get_file(
+                            file_id=message.document.file_id,
+                        )
+                ).file_path
+        ) as file:
+            try:
+                workbook = openpyxl.load_workbook(file)
+
+                current_database_substitution = self._database.substitutions.get_substitution(
+                    timestamp=current_timestamp,
+                )
+
+                parsed_substitutions = schedule_parser.utils.parse_substitutions(
+                    worksheet=workbook.worksheets[0],
+                )
+
+                parsed_substitutions_json_string = json.dumps(
+                    substitution.model_dump() for substitution in parsed_substitutions
+                )
+
+                if current_database_substitution:
+                    self._database.substitutions.edit_json_string(
+                        timestamp=current_timestamp,
+                        json_string=parsed_substitutions_json_string,
+                    )
+                else:
+                    self._database.substitutions.add_substitution(
+                        timestamp=current_timestamp,
+                        json_string=parsed_substitutions_json_string,
+                    )
+
+                current_database_substitution = self._database.substitutions.get_substitution(
+                    timestamp=current_timestamp,
+                )
+
+                await self._bot.send_message(
+                    chat_id=message.chat.id,
+                    message_thread_id=utils.get_message_thread_id(message),
+                    text=self._strings.menu.upload_substitutions_success(
+                        date=current_date,
+                        substitution=current_database_substitution,
+                    ),
+                    reply_markup=self._keyboards.upload_substitutions_completed(
+                        date=current_date,
+                    ),
+                )
+
+                await self._send_substitutions_uploaded_notifications(
+                    date=current_date,
+                )
+            except Exception as exception:
+                if type(exception) not in constants.IGNORED_EXCEPTIONS:
+                    self._logger.log_exception(exception)
+
+                await self._bot.send_message(
+                    chat_id=message.chat.id,
+                    message_thread_id=utils.get_message_thread_id(message),
+                    text=self._strings.menu.upload_substitutions_error(),
+                    reply_markup=self._keyboards.upload_substitutions_completed(
+                        date=current_date,
+                    ),
+                )
+            finally:
+                await state.clear()
 
     # endregion

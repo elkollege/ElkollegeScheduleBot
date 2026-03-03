@@ -328,7 +328,7 @@ class CallbacksRouter(aiogram.Router):
                     await state.set_state(states.upload_substitutions)
                     await state.set_data(
                         data={
-                            "current_date": current_date,
+                            "current_timestamp": current_timestamp,
                         },
                     )
                 case ["delete_substitutions", current_timestamp] if is_admin:
