@@ -5,6 +5,7 @@ from .managers import config
 from .managers import database
 from .providers import keyboards
 from .providers import strings
+from .routers import commands
 from .services import logger
 
 
@@ -48,7 +49,18 @@ class AiogramDispatcher(aiogram.Dispatcher):
             self._shutdown_handler,
         )
 
-        # TODO: routers
+        self.include_routers(
+            # TODO: callbacks
+            commands.CommandsRouter(
+                config_manager=config_manager,
+                database_manager=database_manager,
+                keyboards_provider=keyboards_provider,
+                strings_provider=strings_provider,
+                logger_service=logger_service,
+                aiogram_bot=aiogram_bot,
+            ),
+            # TODO: messages
+        )
 
         self._logger.info(f"{self.name} initialized!")
 

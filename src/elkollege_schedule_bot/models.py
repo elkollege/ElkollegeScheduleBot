@@ -11,7 +11,7 @@ class User(pydantic.BaseModel):
     @staticmethod
     def _default_values() -> dict:
         return {
-            "group": "",
+            "group_name": "",
             "is_notifiable": True,
         }
 
