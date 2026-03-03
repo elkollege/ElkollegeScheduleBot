@@ -19,7 +19,7 @@ def get_readable_date(date: datetime.datetime) -> str:
 
 
 def get_timestamp_from_date(date: datetime.datetime) -> int:
-    return int(date.timestamp())
+    return int(datetime.datetime.combine(date, datetime.time.min).timestamp())
 
 
 def get_date_from_timestamp(timestamp: int) -> datetime.datetime:

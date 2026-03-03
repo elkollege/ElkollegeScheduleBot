@@ -5,6 +5,7 @@ from .managers import config
 from .managers import database
 from .providers import keyboards
 from .providers import strings
+from .routers import callbacks
 from .routers import commands
 from .services import logger
 
@@ -50,7 +51,14 @@ class AiogramDispatcher(aiogram.Dispatcher):
         )
 
         self.include_routers(
-            # TODO: callbacks
+            callbacks.CallbacksRouter(
+                config_manager=config_manager,
+                database_manager=database_manager,
+                keyboards_provider=keyboards_provider,
+                strings_provider=strings_provider,
+                logger_service=logger_service,
+                aiogram_bot=aiogram_bot,
+            ),
             commands.CommandsRouter(
                 config_manager=config_manager,
                 database_manager=database_manager,
@@ -90,9 +98,7 @@ class AiogramDispatcher(aiogram.Dispatcher):
 
     async def _error_handler(self, event: aiogram.types.ErrorEvent) -> None:
         if type(event.exception) not in constants.IGNORED_EXCEPTIONS:
-            self._logger.log_exception(
-                exception=event.exception,
-            )
+            self._logger.log_exception(event.exception)
 
     async def _shutdown_handler(self) -> None:
         self._logger.info(f"{self.name} terminated")

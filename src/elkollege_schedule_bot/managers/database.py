@@ -19,12 +19,12 @@ class SchedulesDatabase(pyquoks.managers.database.Database):
             CREATE TABLE IF NOT EXISTS {_NAME} (
             id INTEGER PRIMARY KEY NOT NULL,
             building_id INTEGER NOT NULL,
-            json TEXT NOT NULL
+            json_string TEXT NOT NULL
             )
         """,
     )
 
-    def add_schedules(self, json: str) -> None:
+    def add_schedule(self, json_string: str) -> None:
         cursor = self.cursor()
 
         cursor.execute(
@@ -32,20 +32,20 @@ class SchedulesDatabase(pyquoks.managers.database.Database):
                 f"""
                     INSERT INTO {self._NAME} (
                     building_id,
-                    json
+                    json_string
                     )
                     VALUES (?, ?)
                 """,
             ),
             (
                 constants.TEMP_BUILDING_ID,
-                json,
+                json_string,
             ),
         )
 
         self.commit()
 
-    def get_schedules(self) -> models.DatabaseSchedules | None:
+    def get_schedule(self) -> models.DatabaseSchedule | None:
         cursor = self.cursor()
 
         cursor.execute(
@@ -61,28 +61,28 @@ class SchedulesDatabase(pyquoks.managers.database.Database):
         result = cursor.fetchone()
 
         if result:
-            return models.DatabaseSchedules.model_validate(dict(result))
+            return models.DatabaseSchedule.model_validate(dict(result))
         else:
             return None
 
-    def edit_json(self, json: str) -> None:
+    def edit_json_string(self, json_string: str) -> None:
         cursor = self.cursor()
 
         cursor.execute(
             pyquoks.utils.format_multiline_string(
                 f"""
-                    UPDATE {self._NAME} SET json = ? WHERE building_id = ?
+                    UPDATE {self._NAME} SET json_string = ? WHERE building_id = ?
                 """,
             ),
             (
-                json,
+                json_string,
                 constants.TEMP_BUILDING_ID,
             ),
         )
 
         self.commit()
 
-    def delete_schedules(self) -> None:
+    def delete_schedule(self) -> None:
         cursor = self.cursor()
 
         cursor.execute(
@@ -108,12 +108,12 @@ class SubstitutionsDatabase(pyquoks.managers.database.Database):
             id INTEGER PRIMARY KEY NOT NULL,
             building_id INTEGER NOT NULL,
             timestamp INTEGER NOT NULL,
-            json TEXT NOT NULL
+            json_string TEXT NOT NULL
             )
         """,
     )
 
-    def add_substitutions(self, timestamp: int, json: str) -> None:
+    def add_substitution(self, timestamp: int, json_string: str) -> None:
         cursor = self.cursor()
 
         cursor.execute(
@@ -122,7 +122,7 @@ class SubstitutionsDatabase(pyquoks.managers.database.Database):
                     INSERT INTO {self._NAME} (
                     building_id,
                     timestamp,
-                    json
+                    json_string
                     )
                     VALUES (?, ?, ?)
                 """,
@@ -130,13 +130,13 @@ class SubstitutionsDatabase(pyquoks.managers.database.Database):
             (
                 constants.TEMP_BUILDING_ID,
                 timestamp,
-                json,
+                json_string,
             ),
         )
 
         self.commit()
 
-    def get_substitutions(self, timestamp: int) -> models.DatabaseSubstitutions | None:
+    def get_substitution(self, timestamp: int) -> models.DatabaseSubstitution | None:
         cursor = self.cursor()
 
         cursor.execute(
@@ -153,21 +153,21 @@ class SubstitutionsDatabase(pyquoks.managers.database.Database):
         result = cursor.fetchone()
 
         if result:
-            return models.DatabaseSubstitutions.model_validate(dict(result))
+            return models.DatabaseSubstitution.model_validate(dict(result))
         else:
             return None
 
-    def edit_json(self, timestamp: int, json: str) -> None:
+    def edit_json_string(self, timestamp: int, json_string: str) -> None:
         cursor = self.cursor()
 
         cursor.execute(
             pyquoks.utils.format_multiline_string(
                 f"""
-                    UPDATE {self._NAME} SET json = ? WHERE building_id = ? AND timestamp = ?
+                    UPDATE {self._NAME} SET json_string = ? WHERE building_id = ? AND timestamp = ?
                 """,
             ),
             (
-                json,
+                json_string,
                 constants.TEMP_BUILDING_ID,
                 timestamp,
             ),
@@ -175,7 +175,7 @@ class SubstitutionsDatabase(pyquoks.managers.database.Database):
 
         self.commit()
 
-    def delete_substitutions(self, timestamp: int) -> None:
+    def delete_substitution(self, timestamp: int) -> None:
         cursor = self.cursor()
 
         cursor.execute(
