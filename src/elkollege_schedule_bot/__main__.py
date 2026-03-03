@@ -6,6 +6,7 @@ import aiogram.client.default
 
 from . import dispatcher
 from .managers import config
+from .managers import database
 from .providers import buttons
 from .providers import environment
 from .providers import keyboards
@@ -15,6 +16,7 @@ from .services import logger
 
 async def main() -> None:
     config_manager = config.ConfigManager()
+    database_manager = database.DatabaseManager()
     environment_provider = environment.EnvironmentProvider()
     strings_provider = strings.StringsProvider()
     buttons_provider = buttons.ButtonsProvider(
@@ -36,6 +38,7 @@ async def main() -> None:
     )
     aiogram_dispatcher = dispatcher.AiogramDispatcher(
         config_manager=config_manager,
+        database_manager=database_manager,
         keyboards_provider=keyboards_provider,
         strings_provider=strings_provider,
         logger_service=aiogram_dispatcher_logger,

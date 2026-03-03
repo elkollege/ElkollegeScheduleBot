@@ -2,6 +2,7 @@ import aiogram
 
 from . import constants
 from .managers import config
+from .managers import database
 from .providers import keyboards
 from .providers import strings
 from .services import logger
@@ -18,12 +19,14 @@ class AiogramDispatcher(aiogram.Dispatcher):
     def __init__(
             self,
             config_manager: config.ConfigManager,
+            database_manager: database.DatabaseManager,
             keyboards_provider: keyboards.KeyboardsProvider,
             strings_provider: strings.StringsProvider,
             logger_service: logger.LoggerService,
             aiogram_bot: aiogram.Bot,
     ) -> None:
         self._config = config_manager
+        self._database = database_manager
         self._keyboards = keyboards_provider
         self._strings = strings_provider
         self._logger = logger_service
