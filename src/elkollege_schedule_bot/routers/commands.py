@@ -4,6 +4,7 @@ import aiogram
 import aiogram.filters
 import pyquoks.utils
 
+from .. import constants
 from .. import models
 from .. import utils
 from ..managers import config
@@ -44,6 +45,11 @@ class CommandsRouter(aiogram.Router):
             aiogram.filters.Command("admin", "adm"),
         )
 
+        self.message.register(
+            self._report_handler,
+            aiogram.filters.Command("report"),
+        )
+
         self._logger.info(f"{self.name} initialized!")
 
     # region Handlers
@@ -70,6 +76,26 @@ class CommandsRouter(aiogram.Router):
                 user=message.from_user,
             ),
             reply_markup=self._keyboards.start(),
+        )
+
+    async def _report_handler(
+            self,
+            message: aiogram.types.Message,
+            command: aiogram.filters.CommandObject,
+    ) -> typing.Any:
+        self._logger.log_user_interaction(
+            user=message.from_user,
+            interaction=command.text,
+        )
+
+        await self._bot.send_message(
+            chat_id=message.chat.id,
+            message_thread_id=utils.get_message_thread_id(message),
+            text=self._strings.menu.report(),
+            reply_markup=self._keyboards.report(
+                contact_developer_url=self._config.settings.contact_developer,
+                source_code_url=constants.SOURCE_CODE_URL,
+            ),
         )
 
     async def _admin_handler(

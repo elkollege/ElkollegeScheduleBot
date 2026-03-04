@@ -17,6 +17,10 @@ class AiogramDispatcher(aiogram.Dispatcher):
             command="/start",
             description="Главное меню",
         ),
+        aiogram.types.BotCommand(
+            command="/report",
+            description="Сообщить об ошибке & Предложить идею",
+        ),
     ]
 
     def __init__(

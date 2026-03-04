@@ -62,6 +62,22 @@ class ButtonsProvider:
 
     # endregion
 
+    # region /report
+
+    def contact_developer(self, contact_developer_url: str) -> aiogram.types.InlineKeyboardButton:
+        return aiogram.types.InlineKeyboardButton(
+            text=self._strings.button.contact_developer(),
+            url=contact_developer_url,
+        )
+
+    def source_code(self, source_code_url: str) -> aiogram.types.InlineKeyboardButton:
+        return aiogram.types.InlineKeyboardButton(
+            text=self._strings.button.source_code(),
+            url=source_code_url,
+        )
+
+    # endregion
+
     # region /admin
 
     def manage_schedule(self) -> aiogram.types.InlineKeyboardButton:
