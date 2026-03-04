@@ -67,7 +67,7 @@ class MessagesRouter(aiogram.Router):
         if (is_notifiable is not None) and not (is_notifiable == user.is_notifiable):
             return False
 
-        if (has_group is not None) and not (has_group == bool(user.group_name)):
+        if (has_group is not None) and not (has_group == user.has_group):
             return False
 
         if (is_admin is not None) and not (is_admin == (user.id in self._config.settings.admins_list)):
@@ -112,7 +112,7 @@ class MessagesRouter(aiogram.Router):
             ),
             text=lambda _: self._strings.menu.notification_schedule_uploaded(),
             reply_markup=lambda user: self._keyboards.notification_schedule_uploaded(
-                has_group=bool(user.group_name),
+                has_group=user.has_group,
             ),
         )
 

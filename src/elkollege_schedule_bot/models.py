@@ -52,6 +52,10 @@ class DatabaseUser(pydantic.BaseModel):
     group_name: str
     is_notifiable: bool
 
+    @property
+    def has_group(self) -> bool:
+        return bool(self.group_name)
+
     @staticmethod
     def _default_values() -> dict:
         return {

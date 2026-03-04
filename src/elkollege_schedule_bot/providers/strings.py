@@ -26,6 +26,10 @@ class AlertStrings(pyquoks.providers.strings.Strings):
         return f"Выбрана группа \"{group_name}\"!"
 
     @classmethod
+    def group_unselected(cls) -> str:
+        return "Выбранная группа очищена!"
+
+    @classmethod
     def group_not_selected(cls) -> str:
         return "Выберите группу для просмотра расписания!"
 
@@ -79,6 +83,10 @@ class ButtonStrings(pyquoks.providers.strings.Strings):
     @classmethod
     def settings(cls) -> str:
         return "Настройки"
+
+    @classmethod
+    def unselect_group(cls) -> str:
+        return "Отменить выбор группы"
 
     @classmethod
     def switchable_setting(cls, name: str, value: bool) -> str:
@@ -220,7 +228,7 @@ class MenuStrings(pyquoks.providers.strings.Strings):
             """,
             "\n".join(i for i in [
                 f"User ID: <b>{user.id}</b>",
-                f"Группа: <b>{user.group_name}</b>" if user.group_name else None,
+                f"Группа: <b>{user.group_name}</b>" if user.has_group else None,
             ] if i),
         )
 

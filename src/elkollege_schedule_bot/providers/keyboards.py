@@ -135,6 +135,10 @@ class KeyboardsProvider:
             ],
             width=constants.SETTINGS_PER_ROW,
         )
+        if user.has_group:
+            markup_builder.row(
+                self._buttons.unselect_group(),
+            )
         markup_builder.row(
             self._buttons.back_to_start(),
         )
