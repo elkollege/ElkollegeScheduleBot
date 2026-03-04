@@ -78,8 +78,8 @@ class MessagesRouter(aiogram.Router):
     async def _send_notifications(
             self,
             users_list: list[models.DatabaseUser],
-            text: str,
-            reply_markup: aiogram.types.InlineKeyboardMarkup,
+            text: typing.Callable[[models.DatabaseUser], str],
+            reply_markup: typing.Callable[[models.DatabaseUser], aiogram.types.InlineKeyboardMarkup],
     ) -> None:
         self._logger.info(self._send_notifications.__name__)
 
@@ -87,8 +87,8 @@ class MessagesRouter(aiogram.Router):
             try:
                 await self._bot.send_message(
                     chat_id=user.id,
-                    text=text,
-                    reply_markup=reply_markup,
+                    text=text(user),
+                    reply_markup=reply_markup(user),
                 )
             except Exception as exception:
                 if type(exception) not in constants.IGNORED_EXCEPTIONS:
@@ -110,8 +110,10 @@ class MessagesRouter(aiogram.Router):
                     current_users_list,
                 )
             ),
-            text=self._strings.menu.notification_schedule_uploaded(),
-            reply_markup=self._keyboards.notification_schedule_uploaded(),
+            text=lambda _: self._strings.menu.notification_schedule_uploaded(),
+            reply_markup=lambda user: self._keyboards.notification_schedule_uploaded(
+                has_group=bool(user.group_name),
+            ),
         )
 
     async def _send_substitutions_uploaded_notifications(self, date: datetime.datetime) -> None:
@@ -131,8 +133,8 @@ class MessagesRouter(aiogram.Router):
                     current_users_list,
                 )
             ),
-            text=self._strings.menu.notification_substitutions_uploaded(date),
-            reply_markup=self._keyboards.notification_substitutions_uploaded(date),
+            text=lambda _: self._strings.menu.notification_substitutions_uploaded(date),
+            reply_markup=lambda _: self._keyboards.notification_substitutions_uploaded(date),
         )
 
     # endregion

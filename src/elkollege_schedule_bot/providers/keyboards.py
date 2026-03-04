@@ -255,11 +255,15 @@ class KeyboardsProvider:
 
     # region notification_*
 
-    def notification_schedule_uploaded(self) -> aiogram.types.InlineKeyboardMarkup:
+    def notification_schedule_uploaded(self, has_group: bool) -> aiogram.types.InlineKeyboardMarkup:
         markup_builder = aiogram.utils.keyboard.InlineKeyboardBuilder()
         markup_builder.row(
             self._buttons.view_schedules(),
         )
+        if not has_group:
+            markup_builder.row(
+                self._buttons.view_groups(),
+            )
 
         return markup_builder.as_markup()
 
