@@ -134,11 +134,15 @@ class CallbacksRouter(aiogram.Router):
                         current_day_schedule = current_group_schedule.get_day_schedule_by_weekday(
                             weekday=current_date.weekday(),
                         )
+
+                        current_periods_list = current_day_schedule.periods_list
                     except StopIteration:
-                        current_day_schedule = []
+                        current_periods_list = []
 
                     if current_database_substitution:
-                        current_substitutions_list = current_database_substitution.substitutions_list
+                        current_substitutions_list = current_database_substitution.get_substitutions_by_group_name(
+                            group_name=current_database_user.group_name,
+                        )
                     else:
                         current_substitutions_list = []
 
@@ -148,7 +152,7 @@ class CallbacksRouter(aiogram.Router):
                         text=self._strings.menu.schedule(
                             date=current_date,
                             schedule=schedule_parser.utils.apply_substitutions_to_schedule(
-                                schedule=current_day_schedule.periods_list,
+                                schedule=current_periods_list,
                                 substitutions=current_substitutions_list,
                             ),
                             has_substitutions=bool(current_substitutions_list),
@@ -206,7 +210,7 @@ class CallbacksRouter(aiogram.Router):
                     self._database.users._edit_setting(
                         _id=current_database_user.id,
                         setting=current_setting,
-                        value=getattr(current_database_user, current_setting),
+                        value=not getattr(current_database_user, current_setting),
                     )
 
                     current_database_user = self._database.users.get_user(

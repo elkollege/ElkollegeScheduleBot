@@ -181,7 +181,7 @@ class MenuStrings(pyquoks.providers.strings.Strings):
                 {1}
             """,
             utils.get_readable_date(date),
-            "\n".join(i for i in [
+            "\n\n".join(i for i in [
                 "\n".join(period.readable for period in schedule) if schedule else "ℹ️ Пары отсутствуют",
                 "ℹ️ Замены не загружены" if not has_substitutions else None,
             ] if i),

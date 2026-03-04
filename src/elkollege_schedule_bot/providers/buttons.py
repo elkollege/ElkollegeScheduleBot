@@ -182,7 +182,6 @@ class ButtonsProvider:
     def page_index(
             self,
             callback_data: str,
-            is_answer_callback: bool,
             current_page: int,
             total_pages: int,
     ) -> aiogram.types.InlineKeyboardButton:
@@ -191,7 +190,7 @@ class ButtonsProvider:
                 current_page=current_page,
                 total_pages=total_pages,
             ),
-            callback_data="answer_callback" if is_answer_callback else callback_data,
+            callback_data=f"{callback_data} {total_pages if current_page == constants.FIRST_PAGE else constants.FIRST_PAGE}",
         )
 
     def page_next(

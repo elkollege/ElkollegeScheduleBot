@@ -38,8 +38,7 @@ class KeyboardsProvider:
                 is_answer_callback=page_previous < constants.FIRST_PAGE,
             ),
             self._buttons.page_index(
-                callback_data=f"{callback_data} {constants.FIRST_PAGE}",
-                is_answer_callback=current_page == constants.FIRST_PAGE,
+                callback_data=callback_data,
                 current_page=current_page,
                 total_pages=total_pages,
             ),

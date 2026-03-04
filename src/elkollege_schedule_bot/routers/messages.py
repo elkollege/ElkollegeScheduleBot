@@ -105,7 +105,6 @@ class MessagesRouter(aiogram.Router):
                     lambda user: self._users_filter(
                         user,
                         is_notifiable=True,
-                        has_group=False,
                         is_admin=False,
                     ),
                     current_users_list,
@@ -177,7 +176,7 @@ class MessagesRouter(aiogram.Router):
                 )
 
                 parsed_schedule_json_string = json.dumps(
-                    group_schedule.model_dump() for group_schedule in parsed_schedule
+                    [group_schedule.model_dump() for group_schedule in parsed_schedule]
                 )
 
                 if current_database_schedule:
@@ -257,7 +256,7 @@ class MessagesRouter(aiogram.Router):
                 )
 
                 parsed_substitutions_json_string = json.dumps(
-                    substitution.model_dump() for substitution in parsed_substitutions
+                    [substitution.model_dump() for substitution in parsed_substitutions]
                 )
 
                 if current_database_substitution:
