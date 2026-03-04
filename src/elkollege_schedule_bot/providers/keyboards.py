@@ -143,6 +143,25 @@ class KeyboardsProvider:
 
     # endregion
 
+    # region /report
+
+    def report(self, contact_developer_url: str, source_code_url: str) -> aiogram.types.InlineKeyboardMarkup:
+        markup_builder = aiogram.utils.keyboard.InlineKeyboardBuilder()
+        markup_builder.row(
+            self._buttons.contact_developer(
+                contact_developer_url=contact_developer_url,
+            ),
+        )
+        markup_builder.row(
+            self._buttons.source_code(
+                source_code_url=source_code_url,
+            ),
+        )
+
+        return markup_builder.as_markup()
+
+    # endregion
+
     # region /admin
 
     def admin(self) -> aiogram.types.InlineKeyboardMarkup:

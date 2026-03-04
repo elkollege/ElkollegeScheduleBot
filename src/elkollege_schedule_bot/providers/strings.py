@@ -86,6 +86,18 @@ class ButtonStrings(pyquoks.providers.strings.Strings):
 
     # endregion
 
+    # region /report
+
+    @classmethod
+    def contact_developer(cls) -> str:
+        return "Написать разработчику"
+
+    @classmethod
+    def source_code(cls) -> str:
+        return "Исходный код на GitHub"
+
+    # endregion
+
     # region /admin
 
     @classmethod
@@ -210,6 +222,24 @@ class MenuStrings(pyquoks.providers.strings.Strings):
                 f"User ID: <b>{user.id}</b>",
                 f"Группа: <b>{user.group_name}</b>" if user.group_name else None,
             ] if i),
+        )
+
+    # endregion
+
+    # region /report
+
+    @classmethod
+    def report(cls) -> str:
+        return pyquoks.utils.format_multiline_string(
+            """
+                <b>Сообщить об ошибке</b>
+                
+                Привет, нашли недочёт или баг?
+                Хотите предложить идею?
+                
+                Любая помощь приветствуется,
+                разработчик всегда готов поболтать!
+            """,
         )
 
     # endregion

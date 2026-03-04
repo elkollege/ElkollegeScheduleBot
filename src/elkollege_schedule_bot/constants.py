@@ -17,3 +17,5 @@ IGNORED_EXCEPTIONS = (
     aiogram.exceptions.TelegramForbiddenError,
     aiogram.exceptions.TelegramRetryAfter,
 )
+
+SOURCE_CODE_URL = "https://github.com/elkollege/ElkollegeScheduleBot/"
