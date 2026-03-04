@@ -2,6 +2,8 @@ import datetime
 
 import aiogram
 
+from . import constants
+
 
 def get_message_thread_id(message: aiogram.types.Message) -> int | None:
     if message.reply_to_message and message.reply_to_message.is_topic_message:
@@ -13,12 +15,12 @@ def get_message_thread_id(message: aiogram.types.Message) -> int | None:
 
 
 def get_readable_date(date: datetime.datetime) -> str:
-    return date.strftime("%d.%m.%y")
+    return date.strftime(constants.DATE_FORMAT_READABLE)
 
 
-def get_callback_date(date: datetime.datetime) -> str:
-    return date.strftime("%d_%m_%y")
+def get_timestamp_from_date(date: datetime.datetime) -> int:
+    return int(datetime.datetime.combine(date, datetime.time.min).timestamp())
 
 
-def get_date_from_callback(callback: str) -> datetime.datetime:
-    return datetime.datetime.strptime(callback, "%d_%m_%y")
+def get_date_from_timestamp(timestamp: int) -> datetime.datetime:
+    return datetime.datetime.fromtimestamp(timestamp)

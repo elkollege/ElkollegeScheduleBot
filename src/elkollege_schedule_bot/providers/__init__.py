@@ -4,8 +4,3 @@ __all__ = [
     "keyboards",
     "strings",
 ]
-
-from . import buttons
-from . import environment
-from . import keyboards
-from . import strings

@@ -1,5 +1,5 @@
 import aiogram
-import pyquoks
+import pyquoks.services.logger
 
 
 class LoggerService(pyquoks.services.logger.LoggerService):
@@ -7,8 +7,9 @@ class LoggerService(pyquoks.services.logger.LoggerService):
         user_info = " ".join([
             " | ".join(i for i in [
                 user.full_name,
-                f"@{user.username}" if user.username else "",
+                f"@{user.username}" if user.username else None,
             ] if i),
             f"({user.id})",
         ])
+
         self.info(f"{user_info} - \"{interaction}\"")

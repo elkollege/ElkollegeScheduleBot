@@ -1,4 +1,4 @@
-import pyquoks
+import pyquoks.providers.environment
 
 
 class EnvironmentProvider(pyquoks.providers.environment.EnvironmentProvider):

@@ -1,12 +1,13 @@
 import datetime
-import textwrap
 
 import aiogram
-import pyquoks
-import schedule_parser
+import pyquoks.providers.strings
+import pyquoks.utils
+import schedule_parser.models
 
-import elkollege_schedule_bot.models
-import elkollege_schedule_bot.utils
+from .. import constants
+from .. import models
+from .. import utils
 
 
 class StringsProvider(pyquoks.providers.strings.StringsProvider):
@@ -21,8 +22,8 @@ class AlertStrings(pyquoks.providers.strings.Strings):
     # region /start
 
     @classmethod
-    def group_selected(cls, group: str) -> str:
-        return f"Выбрана группа \"{group}\"!"
+    def group_selected(cls, group_name: str) -> str:
+        return f"Выбрана группа \"{group_name}\"!"
 
     @classmethod
     def group_not_selected(cls) -> str:
@@ -37,23 +38,23 @@ class AlertStrings(pyquoks.providers.strings.Strings):
     # region /admin
 
     @classmethod
-    def schedule_unavailable(cls) -> str:
-        return "Расписание недоступно!"
+    def schedule_missing(cls) -> str:
+        return "Расписание отсутствует!"
 
     @classmethod
     def schedule_deleted(cls) -> str:
         return "Расписание удалено!"
 
     @classmethod
-    def substitutions_unavailable(cls) -> str:
-        return "Замены недоступны!"
+    def substitutions_missing(cls) -> str:
+        return "Замены отсутствует!"
 
     @classmethod
     def substitutions_deleted(cls) -> str:
-        return "Замены удалены!"
+        return "Замены удалено!"
 
     @classmethod
-    def export_logs_unavailable(cls) -> str:
+    def logging_disabled(cls) -> str:
         return "Логирование отключено!"
 
     # endregion
@@ -68,12 +69,8 @@ class ButtonStrings(pyquoks.providers.strings.Strings):
     # region /start
 
     @classmethod
-    def view_schedules(cls) -> str:
+    def view_schedule(cls) -> str:
         return "Просмотр расписания"
-
-    @classmethod
-    def schedule_readable(cls, date: datetime.datetime) -> str:
-        return f"Расписание на {elkollege_schedule_bot.utils.get_readable_date(date)}"
 
     @classmethod
     def view_groups(cls) -> str:
@@ -84,7 +81,7 @@ class ButtonStrings(pyquoks.providers.strings.Strings):
         return "Настройки"
 
     @classmethod
-    def settings_switch(cls, name: str, value: bool) -> str:
+    def switchable_setting(cls, name: str, value: bool) -> str:
         return f"{name} - {"✅" if value else "❌"}"
 
     # endregion
@@ -96,16 +93,16 @@ class ButtonStrings(pyquoks.providers.strings.Strings):
         return "Расписание"
 
     @classmethod
-    def substitutions(cls) -> str:
-        return "Замены"
-
-    @classmethod
     def upload(cls) -> str:
         return "Загрузить"
 
     @classmethod
     def delete(cls) -> str:
         return "Удалить"
+
+    @classmethod
+    def substitutions(cls) -> str:
+        return "Замены"
 
     @classmethod
     def export_logs(cls) -> str:
@@ -132,7 +129,7 @@ class ButtonStrings(pyquoks.providers.strings.Strings):
         return "<"
 
     @classmethod
-    def page_info(cls, current_page: int, total_pages: int) -> str:
+    def page_index(cls, current_page: int, total_pages: int) -> str:
         return f"{current_page} / {total_pages}"
 
     @classmethod
@@ -148,24 +145,25 @@ class MenuStrings(pyquoks.providers.strings.Strings):
 
     @classmethod
     def start(cls, user: aiogram.types.User) -> str:
-        return textwrap.dedent(
-            f"""\
-            <b>Привет, {user.full_name}!</b>
-
-            Здесь вы можете посмотреть
-            актуальное расписание
-            Электростальского колледжа
-            для вашей учебной группы.
+        return pyquoks.utils.format_multiline_string(
+            """
+                <b>Привет, {0}!</b>
+                
+                Здесь вы можете просмотреть
+                актуальное расписание
+                Электростальского колледжа
+                для вашей учебной группы.
             """,
+            user.full_name,
         )
 
     @classmethod
     def view_schedules(cls) -> str:
-        return textwrap.dedent(
-            f"""\
-            <b>Просмотр расписания</b>
-
-            Выберите нужную дату:
+        return pyquoks.utils.format_multiline_string(
+            """
+                <b>Просмотр расписания</b>
+                
+                Выберите нужную дату:
             """,
         )
 
@@ -176,34 +174,42 @@ class MenuStrings(pyquoks.providers.strings.Strings):
             schedule: list[schedule_parser.models.Period],
             has_substitutions: bool,
     ) -> str:
-        if schedule:
-            readable_schedule = "\n".join(period.readable for period in schedule)
-        else:
-            readable_schedule = "*Пары отсутствуют*"
-
-        # different string format is used to avoid unnecessary leading whitespaces
-        return f"<b>Расписание на {elkollege_schedule_bot.utils.get_readable_date(date)}</b>{"\n*Замены не загружены*" if not has_substitutions else ""}\n\n{readable_schedule}"
+        return pyquoks.utils.format_multiline_string(
+            """
+                <b>Расписание на {0}</b>
+                
+                {1}
+            """,
+            utils.get_readable_date(date),
+            "\n\n".join(i for i in [
+                "\n".join(period.readable for period in schedule) if schedule else "ℹ️ Пары отсутствуют",
+                "ℹ️ Замены не загружены" if not has_substitutions else None,
+            ] if i),
+        )
 
     @classmethod
     def view_groups(cls) -> str:
-        return textwrap.dedent(
-            f"""\
-            <b>Выбор группы</b>
-
-            Выберите свою учебную 
-            группу из списка ниже:
+        return pyquoks.utils.format_multiline_string(
+            """
+                <b>Выбор группы</b>
+                
+                Выберите свою учебную
+                группу из списка ниже:
             """,
         )
 
     @classmethod
-    def settings(cls, user: elkollege_schedule_bot.models.User) -> str:
-        return textwrap.dedent(
-            f"""\
-            <b>Настройки</b>
-
-            UserID: <b>{user.id}</b>
-            {f"Группа: <b>{user.group}</b>" if user.group else ""}
+    def settings(cls, user: models.DatabaseUser) -> str:
+        return pyquoks.utils.format_multiline_string(
+            """
+                <b>Настройки</b>
+                
+                {0}
             """,
+            "\n".join(i for i in [
+                f"User ID: <b>{user.id}</b>",
+                f"Группа: <b>{user.group_name}</b>" if user.group_name else None,
+            ] if i),
         )
 
     # endregion
@@ -211,65 +217,72 @@ class MenuStrings(pyquoks.providers.strings.Strings):
     # region /admin
 
     @classmethod
-    def admin(cls, user: aiogram.types.User, time_started: datetime.datetime) -> str:
-        return textwrap.dedent(
-            f"""\
-            <b>Меню администратора</b>
-
-            Добро пожаловать, {user.full_name}!
-
-            Дата запуска: <b>{time_started.astimezone(datetime.UTC).strftime("%d.%m.%y %H:%M:%S")} UTC</b>
+    def admin(cls, user: aiogram.types.User, date_started: datetime.datetime) -> str:
+        return pyquoks.utils.format_multiline_string(
+            """
+                <b>Меню администратора</b>
+                
+                Добро пожаловать, {0}!
+                
+                Дата запуска: <b>{1} UTC</b>
             """,
+            user.full_name,
+            date_started.astimezone(datetime.UTC).strftime(constants.DATE_FORMAT_STARTED),
         )
 
     @classmethod
-    def manage_schedule(cls, schedule: list[schedule_parser.models.GroupSchedule]) -> str:
-        return textwrap.dedent(
-            f"""\
-            <b>Управление расписанием</b>
-
-            Статус расписания: <b>{"Загружено" if schedule else "Отсутствует"}</b>
-            {f"Учебных групп: <b>{len(schedule)}</b>" if schedule else ""}
+    def manage_schedule(cls, schedule: models.DatabaseSchedule | None) -> str:
+        return pyquoks.utils.format_multiline_string(
+            """
+                <b>Управление расписанием</b>
+                
+                {0}
             """,
+            "\n".join(i for i in [
+                f"Статус расписания: <b>{"Загружено" if schedule else "Отсутствует"}</b>",
+                f"Учебных групп: <b>{len(schedule.groups_list)}</b>" if schedule else None,
+            ] if i),
         )
 
     @classmethod
     def upload_schedule(cls, workbook_extension: str) -> str:
-        return textwrap.dedent(
-            f"""\
-            <b>Загрузка расписания</b>
-
-            Отправьте файл с расширением <b>\".{workbook_extension}\"</b>
+        return pyquoks.utils.format_multiline_string(
+            """
+                <b>Загрузка расписания</b>
+                
+                Отправьте файл с расширением <b>\".{0}\"</b>:
             """,
+            workbook_extension,
         )
 
     @classmethod
     def upload_schedule_error(cls) -> str:
-        return textwrap.dedent(
-            f"""\
-            <b>Возникла ошибка!</b>
-
-            Не удалось обработать расписание.
+        return pyquoks.utils.format_multiline_string(
+            """
+                <b>Возникла ошибка!</b>
+                
+                Не удалось обработать расписание.
             """,
         )
 
     @classmethod
-    def upload_schedule_success(cls, schedule: list[schedule_parser.models.GroupSchedule]) -> str:
-        return textwrap.dedent(
-            f"""\
-            <b>Расписание загружено!</b>
-
-            Учебных групп: <b>{len(schedule)}</b>
+    def upload_schedule_success(cls, schedule: models.DatabaseSchedule) -> str:
+        return pyquoks.utils.format_multiline_string(
+            """
+                <b>Расписание загружено!</b>
+                
+                Учебных групп: <b>{0}</b>
             """,
+            len(schedule.groups_list),
         )
 
     @classmethod
     def view_substitutions(cls) -> str:
-        return textwrap.dedent(
-            f"""\
-            <b>Управление заменами</b>
-
-            Выберите нужную дату:
+        return pyquoks.utils.format_multiline_string(
+            """
+                <b>Управление заменами</b>
+                
+                Выберите нужную дату:
             """,
         )
 
@@ -277,34 +290,40 @@ class MenuStrings(pyquoks.providers.strings.Strings):
     def manage_substitutions(
             cls,
             date: datetime.datetime,
-            substitutions: list[schedule_parser.models.Substitution],
+            substitution: models.DatabaseSubstitution | None,
     ) -> str:
-        return textwrap.dedent(
-            f"""\
-            <b>Управление заменами на {elkollege_schedule_bot.utils.get_readable_date(date)}</b>
-
-            Статус замен: <b>{"Загружены" if substitutions else "Отсутствуют"}</b>
-            {f"Замен: <b>{len(substitutions)}</b>" if substitutions else ""}
+        return pyquoks.utils.format_multiline_string(
+            """
+                <b>Управление заменами на {0}</b>
+                
+                {1}
             """,
+            utils.get_readable_date(date),
+            "\n".join(i for i in [
+                f"Статус замен: <b>{"Загружены" if substitution else "Отсутствуют"}</b>",
+                f"Замен: <b>{len(substitution.substitutions_list)}</b>" if substitution else None,
+            ] if i),
         )
 
     @classmethod
     def upload_substitutions(cls, date: datetime.datetime, workbook_extension: str) -> str:
-        return textwrap.dedent(
-            f"""\
-            <b>Загрузка замен на {elkollege_schedule_bot.utils.get_readable_date(date)}</b>
-
-            Отправьте файл с расширением <b>\".{workbook_extension}\"</b>
+        return pyquoks.utils.format_multiline_string(
+            """
+                <b>Загрузка замен на {0}</b>
+                
+                Отправьте файл с расширением <b>\".{1}\"</b>:
             """,
+            utils.get_readable_date(date),
+            workbook_extension,
         )
 
     @classmethod
     def upload_substitutions_error(cls) -> str:
-        return textwrap.dedent(
-            f"""\
-            <b>Возникла ошибка!</b>
-
-            Не удалось обработать замены.
+        return pyquoks.utils.format_multiline_string(
+            """
+                <b>Возникла ошибка!</b>
+                
+                Не удалось обработать замены.
             """,
         )
 
@@ -312,14 +331,16 @@ class MenuStrings(pyquoks.providers.strings.Strings):
     def upload_substitutions_success(
             cls,
             date: datetime.datetime,
-            substitutions: list[schedule_parser.models.Substitution],
+            substitution: models.DatabaseSubstitution,
     ) -> str:
-        return textwrap.dedent(
-            f"""\
-            <b>Замены на {elkollege_schedule_bot.utils.get_readable_date(date)} загружены!</b>
-
-            Замен: <b>{len(substitutions)}</b>
+        return pyquoks.utils.format_multiline_string(
+            """
+                <b>Замены на {0} загружены!</b>
+                
+                Замен: <b>{1}</b>
             """,
+            utils.get_readable_date(date),
+            len(substitution.substitutions_list),
         )
 
     # endregion
@@ -328,11 +349,20 @@ class MenuStrings(pyquoks.providers.strings.Strings):
 
     @classmethod
     def notification_schedule_uploaded(cls) -> str:
-        return "Загружено новое расписание!"
+        return pyquoks.utils.format_multiline_string(
+            """
+                <b>Загружено новое расписание!</b>
+            """,
+        )
 
     @classmethod
     def notification_substitutions_uploaded(cls, date: datetime.datetime) -> str:
-        return f"Загружены замены на {elkollege_schedule_bot.utils.get_readable_date(date)}!"
+        return pyquoks.utils.format_multiline_string(
+            """
+                <b>Загружены замены на {0}!</b>
+            """,
+            utils.get_readable_date(date),
+        )
 
     # endregion
 
@@ -346,10 +376,10 @@ class SettingsStrings(pyquoks.providers.strings.Strings):
     def _get_setting_string(cls, setting: str) -> str:
         string_callable = getattr(cls, setting, None)
 
-        if string_callable is None:
+        if not string_callable:
             raise AttributeError(
                 name=setting,
                 obj=cls,
             )
-        else:
-            return string_callable()
+
+        return string_callable()
