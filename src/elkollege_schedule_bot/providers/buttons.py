@@ -51,6 +51,12 @@ class ButtonsProvider:
             callback_data="settings",
         )
 
+    def unselect_group(self) -> aiogram.types.InlineKeyboardButton:
+        return aiogram.types.InlineKeyboardButton(
+            text=self._strings.button.unselect_group(),
+            callback_data="unselect_group",
+        )
+
     def switchable_setting(self, name: str, value: bool) -> aiogram.types.InlineKeyboardButton:
         return aiogram.types.InlineKeyboardButton(
             text=self._strings.button.switchable_setting(

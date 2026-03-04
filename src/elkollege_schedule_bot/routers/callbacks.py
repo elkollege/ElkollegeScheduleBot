@@ -108,7 +108,7 @@ class CallbacksRouter(aiogram.Router):
                             show_alert=True,
                         )
 
-                    if not current_database_user.group_name:
+                    if not current_database_user.has_group:
                         return await self._bot.answer_callback_query(
                             callback_query_id=call.id,
                             text=self._strings.alert.group_not_selected(),
@@ -205,6 +205,32 @@ class CallbacksRouter(aiogram.Router):
                         reply_markup=self._keyboards.settings(
                             user=current_database_user,
                         ),
+                    )
+                case ["unselect_group"]:
+                    self._database.users.edit_group_name(
+                        _id=current_database_user.id,
+                        group_name="",
+                    )
+
+                    current_database_user = self._database.users.get_user(
+                        _id=call.from_user.id,
+                    )
+
+                    await self._bot.edit_message_text(
+                        chat_id=call.message.chat.id,
+                        message_id=call.message.message_id,
+                        text=self._strings.menu.settings(
+                            user=current_database_user,
+                        ),
+                        reply_markup=self._keyboards.settings(
+                            user=current_database_user,
+                        ),
+                    )
+
+                    await self._bot.answer_callback_query(
+                        callback_query_id=call.id,
+                        text=self._strings.alert.group_unselected(),
+                        show_alert=True,
                     )
                 case ["switchable_setting", current_setting]:
                     self._database.users._edit_setting(
